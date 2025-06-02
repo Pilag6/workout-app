@@ -266,6 +266,11 @@ export default function RoutinePage() {
                     <div className="flex gap-2">
                       <Badge variant="secondary">{exercise.muscleGroup}</Badge>
                       <Badge variant="outline">{exercise.equipment}</Badge>
+                      {exercise.youtubeUrl && (
+                        <Badge variant="outline" className="bg-red-50 text-red-700">
+                          📹 Video
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   {exercise.description && <CardDescription>{exercise.description}</CardDescription>}

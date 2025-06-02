@@ -403,6 +403,11 @@ export default function WorkoutPage() {
                               )}
                               {exercise.equipment}
                             </Badge>
+                            {exercise.youtubeUrl && (
+                              <Badge variant="outline" className="bg-red-50 text-red-700 text-xs">
+                                📹 Video
+                              </Badge>
+                            )}
                           </div>
                           {exercise.description && (
                             <p className="text-xs text-muted-foreground">{exercise.description}</p>
@@ -477,6 +482,11 @@ export default function WorkoutPage() {
                                 )}
                                 {exercise.equipment}
                               </Badge>
+                              {exercise.youtubeUrl && (
+                                <Badge variant="outline" className="bg-red-50 text-red-700 text-xs">
+                                  📹 Video
+                                </Badge>
+                              )}
                             </div>
                             {exercise.description && (
                               <p className="text-xs text-muted-foreground mb-2">{exercise.description}</p>
