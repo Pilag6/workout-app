@@ -9,6 +9,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import ExerciseModal from '@/components/ExerciseModal'
 
 interface WorkoutExercise {
   id: string
@@ -18,6 +19,7 @@ interface WorkoutExercise {
   description?: string
   sets: number
   reps: number
+  youtubeUrl?: string
 }
 
 interface ExerciseProgress {
@@ -33,6 +35,8 @@ export default function RoutinePage() {
   const [restTimer, setRestTimer] = useState(0)
   const [isResting, setIsResting] = useState(false)
   const [workoutStartTime, setWorkoutStartTime] = useState<Date | null>(null)
+  const [selectedExercise, setSelectedExercise] = useState<WorkoutExercise | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -168,6 +172,16 @@ export default function RoutinePage() {
     URL.revokeObjectURL(url)
   }
 
+  const openExerciseModal = (exercise: WorkoutExercise) => {
+    setSelectedExercise(exercise)
+    setIsModalOpen(true)
+  }
+
+  const closeExerciseModal = () => {
+    setSelectedExercise(null)
+    setIsModalOpen(false)
+  }
+
   const totalExercises = workout.length
   const completedExercises = progress.filter((p) => p.isCompleted).length
   const overallProgress = totalExercises > 0 ? (completedExercises / totalExercises) * 100 : 0
@@ -241,7 +255,12 @@ export default function RoutinePage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
                       {isCompleted && <Check className="h-5 w-5 text-green-500" />}
-                      {exercise.name}
+                      <span
+                        className="cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => openExerciseModal(exercise)}
+                      >
+                        {exercise.name}
+                      </span>
                       {isCurrent && <Badge variant="default">Current</Badge>}
                     </CardTitle>
                     <div className="flex gap-2">
@@ -289,6 +308,12 @@ export default function RoutinePage() {
             )
           })}
         </div>
+
+        <ExerciseModal
+          exercise={selectedExercise}
+          isOpen={isModalOpen}
+          onClose={closeExerciseModal}
+        />
       </div>
     </div>
   )

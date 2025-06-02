@@ -28,11 +28,22 @@ import {
   Trash2,
   ArrowLeft,
   Dumbbell,
-  User
+  User,
+  Play,
+  ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import ExerciseModal from "@/components/ExerciseModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
 
 interface Exercise {
   id: string;
@@ -40,6 +51,7 @@ interface Exercise {
   muscleGroup: string;
   equipment: "dumbbells" | "bodyweight";
   description?: string;
+  youtubeUrl?: string;
 }
 
 const muscleGroups = [
@@ -57,6 +69,10 @@ export default function ExercisesPage() {
   const [newExercise, setNewExercise] = useState<Partial<Exercise>>({});
   const [isAdding, setIsAdding] = useState(false);
   const { toast } = useToast();
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     const sampleExercises: Exercise[] = [
@@ -67,7 +83,8 @@ export default function ExercisesPage() {
         muscleGroup: "abs",
         equipment: "bodyweight",
         description:
-          "Lie on your back and alternate elbow to opposite knee in a pedaling motion."
+          "Lie on your back and alternate elbow to opposite knee in a pedaling motion.",
+        youtubeUrl: "https://www.youtube.com/watch?v=VaL7XWK3MVE&ab_channel=Medbridge"
       },
       {
         id: "2",
@@ -83,7 +100,8 @@ export default function ExercisesPage() {
         muscleGroup: "abs",
         equipment: "bodyweight",
         description:
-          "Sit with feet off the ground and twist your torso side to side."
+          "Sit with feet off the ground and twist your torso side to side.",
+        youtubeUrl: "https://www.youtube.com/watch?v=wkD8rjkodUI"
       },
       {
         id: "4",
@@ -91,7 +109,8 @@ export default function ExercisesPage() {
         muscleGroup: "abs",
         equipment: "bodyweight",
         description:
-          "Hold a straight-body position supported by forearms and toes."
+          "Hold a straight-body position supported by forearms and toes.",
+        youtubeUrl: "https://www.youtube.com/watch?v=ASdvN_XEl_c"
       },
       {
         id: "5",
@@ -201,7 +220,8 @@ export default function ExercisesPage() {
         name: "Pull-ups",
         muscleGroup: "back",
         equipment: "bodyweight",
-        description: "Hang from a bar and pull your chin above the bar."
+        description: "Hang from a bar and pull your chin above the bar.",
+        youtubeUrl: "https://www.youtube.com/watch?v=eGo4IYlbE5g"
       },
       {
         id: "19",
@@ -283,7 +303,8 @@ export default function ExercisesPage() {
         muscleGroup: "chest",
         equipment: "bodyweight",
         description:
-          "Lower and raise your body using your arms in a plank position."
+          "Lower and raise your body using your arms in a plank position.",
+        youtubeUrl: "https://www.youtube.com/watch?v=IODxDxX7oi4"
       },
       {
         id: "29",
@@ -559,7 +580,8 @@ export default function ExercisesPage() {
         name: newExercise.name,
         muscleGroup: newExercise.muscleGroup,
         equipment: newExercise.equipment,
-        description: newExercise.description || ""
+        description: newExercise.description || "",
+        youtubeUrl: newExercise.youtubeUrl || undefined
       };
       saveExercises([...exercises, exercise]);
       setNewExercise({});
@@ -577,6 +599,41 @@ export default function ExercisesPage() {
       title: "Exercise deleted",
       description: "Exercise has been removed from your database"
     });
+  };
+
+  const openExerciseModal = (exercise: Exercise) => {
+    setSelectedExercise(exercise);
+    setIsModalOpen(true);
+  };
+
+  const closeExerciseModal = () => {
+    setSelectedExercise(null);
+    setIsModalOpen(false);
+  };
+
+  const startEditExercise = (exercise: Exercise) => {
+    setEditingExercise(exercise);
+    setIsEditing(true);
+  };
+
+  const updateExercise = () => {
+    if (editingExercise) {
+      const updatedExercises = exercises.map(ex =>
+        ex.id === editingExercise.id ? editingExercise : ex
+      );
+      saveExercises(updatedExercises);
+      setEditingExercise(null);
+      setIsEditing(false);
+      toast({
+        title: 'Exercise updated',
+        description: `${editingExercise.name} has been updated`
+      });
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingExercise(null);
+    setIsEditing(false);
   };
 
   return (
@@ -708,6 +765,26 @@ export default function ExercisesPage() {
                         rows={3}
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="youtube-url">
+                        YouTube Video URL (Optional)
+                      </Label>
+                      <Input
+                        id="youtube-url"
+                        value={newExercise.youtubeUrl || ""}
+                        onChange={(e) =>
+                          setNewExercise({
+                            ...newExercise,
+                            youtubeUrl: e.target.value
+                          })
+                        }
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        type="url"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Paste a YouTube video URL to show exercise demonstration
+                      </p>
+                    </div>
                     <div className="flex gap-2">
                       <Button onClick={addExercise} className="flex-1">
                         Add
@@ -743,7 +820,8 @@ export default function ExercisesPage() {
                   {exercises.map((exercise) => (
                     <div
                       key={exercise.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
+                      className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                      onClick={() => openExerciseModal(exercise)}
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -762,6 +840,11 @@ export default function ExercisesPage() {
                             )}
                             {exercise.equipment}
                           </Badge>
+                          {exercise.youtubeUrl && (
+                            <Badge variant="outline" className="bg-red-50 text-red-700">
+                              📹 Video
+                            </Badge>
+                          )}
                         </div>
                         {exercise.description && (
                           <p className="text-sm text-muted-foreground">
@@ -769,14 +852,30 @@ export default function ExercisesPage() {
                           </p>
                         )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteExercise(exercise.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditExercise(exercise);
+                          }}
+                          className="text-primary hover:text-primary"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteExercise(exercise.id);
+                          }}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                   {exercises.length === 0 && (
@@ -789,6 +888,80 @@ export default function ExercisesPage() {
             </Card>
           </div>
         </div>
+
+        {isEditing && editingExercise && (
+          <Dialog open={isEditing} onOpenChange={(open) => !open && cancelEdit()}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Edit Exercise</DialogTitle>
+                <DialogDescription>
+                  Update the exercise details and YouTube video URL
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-name">Exercise Name</Label>
+                  <Input
+                    id="edit-name"
+                    value={editingExercise.name}
+                    onChange={(e) =>
+                      setEditingExercise({
+                        ...editingExercise,
+                        name: e.target.value
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={editingExercise.description || ""}
+                    onChange={(e) =>
+                      setEditingExercise({
+                        ...editingExercise,
+                        description: e.target.value
+                      })
+                    }
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-youtube">YouTube Video URL</Label>
+                  <Input
+                    id="edit-youtube"
+                    value={editingExercise.youtubeUrl || ""}
+                    onChange={(e) =>
+                      setEditingExercise({
+                        ...editingExercise,
+                        youtubeUrl: e.target.value
+                      })
+                    }
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    type="url"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Paste a YouTube video URL to show exercise demonstration
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={cancelEdit}>
+                  Cancel
+                </Button>
+                <Button onClick={updateExercise}>
+                  Update Exercise
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        <ExerciseModal
+          exercise={selectedExercise}
+          isOpen={isModalOpen}
+          onClose={closeExerciseModal}
+        />
       </div>
     </div>
   );

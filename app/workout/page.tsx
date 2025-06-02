@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import ExerciseModal from '@/components/ExerciseModal'
 
 interface Exercise {
   id: string
@@ -18,6 +19,7 @@ interface Exercise {
   muscleGroup: string
   equipment: "dumbbells" | "bodyweight"
   description?: string
+  youtubeUrl?: string
 }
 
 interface WorkoutExercise extends Exercise {
@@ -34,6 +36,8 @@ export default function WorkoutPage() {
   const [exercisesPerGroup, setExercisesPerGroup] = useState(3)
   const [manuallySelectedExercises, setManuallySelectedExercises] = useState<Exercise[]>([])
   const [showManualSelection, setShowManualSelection] = useState(false)
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -234,6 +238,16 @@ export default function WorkoutPage() {
     )
   }
 
+  const openExerciseModal = (exercise: Exercise) => {
+    setSelectedExercise(exercise)
+    setIsModalOpen(true)
+  }
+
+  const closeExerciseModal = () => {
+    setSelectedExercise(null)
+    setIsModalOpen(false)
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -273,7 +287,7 @@ export default function WorkoutPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Or Select Muscle Groups</CardTitle>
@@ -371,6 +385,10 @@ export default function WorkoutPage() {
                             <label
                               htmlFor={`manual-${exercise.id}`}
                               className="font-medium cursor-pointer"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                openExerciseModal(exercise)
+                              }}
                             >
                               {exercise.name}
                             </label>
@@ -442,7 +460,12 @@ export default function WorkoutPage() {
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold">{exercise.name}</h3>
+                              <h3
+                                className="font-semibold cursor-pointer hover:text-primary transition-colors"
+                                onClick={() => openExerciseModal(exercise)}
+                              >
+                                {exercise.name}
+                              </h3>
                               <Badge variant="secondary" className="text-xs">
                                 {exercise.muscleGroup}
                               </Badge>
@@ -505,6 +528,12 @@ export default function WorkoutPage() {
             </Card>
           </div>
         </div>
+
+        <ExerciseModal
+          exercise={selectedExercise}
+          isOpen={isModalOpen}
+          onClose={closeExerciseModal}
+        />
       </div>
     </div>
   )
