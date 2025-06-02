@@ -31,7 +31,6 @@ export default function SummaryPage() {
     const saved = localStorage.getItem("workout-summary")
     if (saved) {
       setSummary(JSON.parse(saved))
-      localStorage.removeItem("workout-summary")
     }
   }, [])
 

@@ -30,7 +30,8 @@ import {
   Dumbbell,
   User,
   Play,
-  ExternalLink
+  ExternalLink,
+  RotateCcw
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -44,6 +45,8 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+
+import sampleExercisesData from "@/data/sampleExercises.json";
 
 interface Exercise {
   id: string;
@@ -75,457 +78,13 @@ export default function ExercisesPage() {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    const sampleExercises: Exercise[] = [
-      // Abs
-      {
-        id: "1",
-        name: "Bicycle Crunches",
-        muscleGroup: "abs",
-        equipment: "bodyweight",
-        description:
-          "Lie on your back and alternate elbow to opposite knee in a pedaling motion.",
-        youtubeUrl: "https://www.youtube.com/watch?v=VaL7XWK3MVE&ab_channel=Medbridge"
-      },
-      {
-        id: "2",
-        name: "Levitation Crunch",
-        muscleGroup: "abs",
-        equipment: "bodyweight",
-        description:
-          "Lift your legs and shoulders off the ground and hold the position briefly."
-      },
-      {
-        id: "3",
-        name: "Russian Twists",
-        muscleGroup: "abs",
-        equipment: "bodyweight",
-        description:
-          "Sit with feet off the ground and twist your torso side to side.",
-        youtubeUrl: "https://www.youtube.com/watch?v=wkD8rjkodUI"
-      },
-      {
-        id: "4",
-        name: "Plank",
-        muscleGroup: "abs",
-        equipment: "bodyweight",
-        description:
-          "Hold a straight-body position supported by forearms and toes.",
-        youtubeUrl: "https://www.youtube.com/watch?v=ASdvN_XEl_c"
-      },
-      {
-        id: "5",
-        name: "Side Bridge Twists",
-        muscleGroup: "abs",
-        equipment: "bodyweight",
-        description: "Hold a side plank and twist your torso under and back up."
-      },
-      {
-        id: "6",
-        name: "Lying Leg Raises",
-        muscleGroup: "abs",
-        equipment: "bodyweight",
-        description:
-          "Lie on your back and lift your legs up together without bending the knees."
-      },
-      {
-        id: "7",
-        name: "Mountain Climbers",
-        muscleGroup: "abs",
-        equipment: "bodyweight",
-        description:
-          "In plank position, alternate driving your knees toward your chest quickly."
-      },
-      {
-        id: "8",
-        name: "Swipers",
-        muscleGroup: "abs",
-        equipment: "bodyweight",
-        description:
-          "Sit and pass your feet over an object while keeping your hands behind you for support."
-      },
-      {
-        id: "9",
-        name: "Sliding Tucks",
-        muscleGroup: "abs",
-        equipment: "bodyweight",
-        description:
-          "From a plank, slide your feet forward to your chest and back using socks or sliders."
-      },
-      {
-        id: "10",
-        name: "Side Planks",
-        muscleGroup: "abs",
-        equipment: "bodyweight",
-        description:
-          "Hold your body in a straight line on your side supported by one forearm."
-      },
+    const sampleExercises = sampleExercisesData as Exercise[];
 
-      // Back
-      {
-        id: "11",
-        name: "Deadlifts",
-        muscleGroup: "back",
-        equipment: "dumbbells",
-        description:
-          "Stand and lower dumbbells while keeping your back straight, then lift back up."
-      },
-      {
-        id: "12",
-        name: "Renegade Rows",
-        muscleGroup: "back",
-        equipment: "dumbbells",
-        description:
-          "In a plank position, row each dumbbell alternately while maintaining balance."
-      },
-      {
-        id: "13",
-        name: "Dumbbell Tripod Rows",
-        muscleGroup: "back",
-        equipment: "dumbbells",
-        description:
-          "Place one hand on a bench and row a dumbbell with the other hand."
-      },
-      {
-        id: "14",
-        name: "Dead Row",
-        muscleGroup: "back",
-        equipment: "dumbbells",
-        description:
-          "Perform a row starting from a dead stop at the bottom of the movement."
-      },
-      {
-        id: "15",
-        name: "Dumbbell Row",
-        muscleGroup: "back",
-        equipment: "dumbbells",
-        description: "Bend over and pull the dumbbell toward your waist."
-      },
-      {
-        id: "16",
-        name: "Pullover",
-        muscleGroup: "back",
-        equipment: "dumbbells",
-        description:
-          "Lie on your back and bring a dumbbell from overhead to above your chest."
-      },
-      {
-        id: "17",
-        name: "Dumbbell Rows",
-        muscleGroup: "back",
-        equipment: "dumbbells",
-        description: "Pull the dumbbells toward your torso while bent over."
-      },
-      {
-        id: "18",
-        name: "Pull-ups",
-        muscleGroup: "back",
-        equipment: "bodyweight",
-        description: "Hang from a bar and pull your chin above the bar.",
-        youtubeUrl: "https://www.youtube.com/watch?v=eGo4IYlbE5g"
-      },
-      {
-        id: "19",
-        name: "Dumbbell Deadlifts",
-        muscleGroup: "back",
-        equipment: "dumbbells",
-        description:
-          "Lower dumbbells to mid-shin while keeping your back straight, then lift."
-      },
-
-      // Biceps
-      {
-        id: "20",
-        name: "Dumbbell Curls",
-        muscleGroup: "biceps",
-        equipment: "dumbbells",
-        description: "Curl the dumbbells from your sides to your shoulders."
-      },
-      {
-        id: "21",
-        name: "Hammer Curls",
-        muscleGroup: "biceps",
-        equipment: "dumbbells",
-        description: "Curl dumbbells with palms facing each other."
-      },
-      {
-        id: "22",
-        name: "DB Concentration Curls",
-        muscleGroup: "biceps",
-        equipment: "dumbbells",
-        description:
-          "Sit and curl a dumbbell with your elbow resting on your thigh."
-      },
-      {
-        id: "23",
-        name: "Zottman Curls",
-        muscleGroup: "biceps",
-        equipment: "dumbbells",
-        description:
-          "Curl dumbbells up normally, rotate wrists, and lower with palms down."
-      },
-      {
-        id: "24",
-        name: "Dumbbell Drag Curls",
-        muscleGroup: "biceps",
-        equipment: "dumbbells",
-        description:
-          "Curl dumbbells while dragging your elbows behind your torso."
-      },
-      {
-        id: "25",
-        name: "DB Incline Curls",
-        muscleGroup: "biceps",
-        equipment: "dumbbells",
-        description:
-          "Lie back on an incline and curl dumbbells with full range of motion."
-      },
-      {
-        id: "26",
-        name: "Dumbbell Bicep Curls",
-        muscleGroup: "biceps",
-        equipment: "dumbbells",
-        description:
-          "Lift the dumbbells toward your shoulders by flexing your elbows."
-      },
-
-      // Chest
-      {
-        id: "27",
-        name: "Bench Press",
-        muscleGroup: "chest",
-        equipment: "dumbbells",
-        description:
-          "Lie on a flat surface and press dumbbells upward from your chest."
-      },
-      {
-        id: "28",
-        name: "Push-ups",
-        muscleGroup: "chest",
-        equipment: "bodyweight",
-        description:
-          "Lower and raise your body using your arms in a plank position.",
-        youtubeUrl: "https://www.youtube.com/watch?v=IODxDxX7oi4"
-      },
-      {
-        id: "29",
-        name: "Dumbbell Flyes",
-        muscleGroup: "chest",
-        equipment: "dumbbells",
-        description:
-          "With arms extended, lower dumbbells out to the sides and bring them back up."
-      },
-      {
-        id: "30",
-        name: "Dumbbell Bench Press",
-        muscleGroup: "chest",
-        equipment: "dumbbells",
-        description:
-          "Lie down and press dumbbells from chest level to above your shoulders."
-      },
-
-      // legs
-      {
-        id: "31",
-        name: "Deadlifts",
-        muscleGroup: "legs",
-        equipment: "dumbbells",
-        description:
-          "Lower dumbbells while keeping legs slightly bent and back straight."
-      },
-      {
-        id: "32",
-        name: "Hyperextensions",
-        muscleGroup: "legs",
-        equipment: "bodyweight",
-        description:
-          "Bend forward at the waist and lift your torso back to alignment."
-      },
-
-      // legs
-      {
-        id: "33",
-        name: "Dumbbell Squats",
-        muscleGroup: "legs",
-        equipment: "dumbbells",
-        description:
-          "Hold dumbbells and squat down until thighs are parallel to the ground."
-      },
-      {
-        id: "34",
-        name: "Dumbbell Lunges",
-        muscleGroup: "legs",
-        equipment: "dumbbells",
-        description:
-          "Step forward into a lunge position while holding dumbbells."
-      },
-      {
-        id: "35",
-        name: "Leg Extensions",
-        muscleGroup: "legs",
-        equipment: "bodyweight",
-        description:
-          "Straighten your knee from a seated position using your legs."
-      },
-      {
-        id: "36",
-        name: "Squats",
-        muscleGroup: "legs",
-        equipment: "bodyweight",
-        description:
-          "Lower your hips from a standing position and rise back up."
-      },
-      {
-        id: "37",
-        name: "Lunges",
-        muscleGroup: "legs",
-        equipment: "bodyweight",
-        description:
-          "Step forward and bend both knees to 90 degrees, then return."
-      },
-
-      // Shoulders
-      {
-        id: "38",
-        name: "DB Scoop Press",
-        muscleGroup: "shoulders",
-        equipment: "dumbbells",
-        description:
-          "Lift dumbbells in an upward and inward scoop motion overhead."
-      },
-      {
-        id: "39",
-        name: "Arnold Press",
-        muscleGroup: "shoulders",
-        equipment: "dumbbells",
-        description: "Rotate dumbbells from front to overhead press position."
-      },
-      {
-        id: "40",
-        name: "DB Lateral Raises",
-        muscleGroup: "shoulders",
-        equipment: "dumbbells",
-        description: "Lift dumbbells out to the sides up to shoulder height."
-      },
-      {
-        id: "41",
-        name: "DP Hip Huggers",
-        muscleGroup: "shoulders",
-        equipment: "dumbbells",
-        description: "Lift dumbbells slightly forward and up close to the body."
-      },
-      {
-        id: "42",
-        name: "DB Front Raises",
-        muscleGroup: "shoulders",
-        equipment: "dumbbells",
-        description: "Lift dumbbells forward until they reach shoulder height."
-      },
-      {
-        id: "43",
-        name: "DB Rear Delt Rows",
-        muscleGroup: "shoulders",
-        equipment: "dumbbells",
-        description:
-          "Bend forward and row dumbbells outward to target rear delts."
-      },
-      {
-        id: "44",
-        name: "DB Over Head Press",
-        muscleGroup: "shoulders",
-        equipment: "dumbbells",
-        description: "Press dumbbells vertically overhead from shoulder level."
-      },
-      {
-        id: "45",
-        name: "Dumbbell Shoulder Press",
-        muscleGroup: "shoulders",
-        equipment: "dumbbells",
-        description:
-          "Press dumbbells upward from shoulder height until arms are extended."
-      },
-
-      // Triceps
-      {
-        id: "46",
-        name: "Diamond Push-Ups",
-        muscleGroup: "triceps",
-        equipment: "bodyweight",
-        description:
-          "Place hands close together and perform a push-up to target triceps."
-      },
-      {
-        id: "47",
-        name: "Cobra Push-Ups",
-        muscleGroup: "triceps",
-        equipment: "bodyweight",
-        description: "Push-up variation with elbows close to body and hips low."
-      },
-      {
-        id: "48",
-        name: "JM Press",
-        muscleGroup: "triceps",
-        equipment: "dumbbells",
-        description: "Lower dumbbells toward the forehead, then press upward."
-      },
-      {
-        id: "49",
-        name: "Triceps Kickbacks",
-        muscleGroup: "triceps",
-        equipment: "dumbbells",
-        description:
-          "Extend your arm back from a bent-over position to contract triceps."
-      },
-      {
-        id: "50",
-        name: "DB Incline Powerbombs",
-        muscleGroup: "triceps",
-        equipment: "dumbbells",
-        description: "Press dumbbells overhead at an incline to target triceps."
-      },
-      {
-        id: "51",
-        name: "Close Grip Bench Press",
-        muscleGroup: "triceps",
-        equipment: "dumbbells",
-        description:
-          "Press dumbbells from chest level with hands close together."
-      },
-      {
-        id: "52",
-        name: "Lying Triceps Extensions",
-        muscleGroup: "triceps",
-        equipment: "dumbbells",
-        description:
-          "Lie down and extend dumbbells from forehead to straight arms."
-      },
-      {
-        id: "53",
-        name: "1 Arm Over Head Triceps",
-        muscleGroup: "triceps",
-        equipment: "dumbbells",
-        description:
-          "Extend one arm overhead with a dumbbell, lowering and lifting behind the head."
-      },
-      {
-        id: "54",
-        name: "Dumbbell Tricep Extensions",
-        muscleGroup: "triceps",
-        equipment: "dumbbells",
-        description:
-          "Lift a dumbbell overhead and lower behind the head, then extend arms."
-      }
-    ];
-
-    const saved = localStorage.getItem("workout-exercises");
-    if (saved) {
-      setExercises(JSON.parse(saved));
-    } else {
-      setExercises(sampleExercises);
-      localStorage.setItem(
-        "workout-exercises",
-        JSON.stringify(sampleExercises)
-      );
-    }
+    setExercises(sampleExercises);
+    localStorage.setItem(
+      "workout-exercises",
+      JSON.stringify(sampleExercises)
+    );
   }, []);
 
   const saveExercises = (newExercises: Exercise[]) => {
@@ -634,6 +193,15 @@ export default function ExercisesPage() {
   const cancelEdit = () => {
     setEditingExercise(null);
     setIsEditing(false);
+  };
+
+  const resetToDefaults = () => {
+    setExercises(sampleExercisesData as Exercise[]);
+    localStorage.setItem("workout-exercises", JSON.stringify(sampleExercisesData));
+    toast({
+      title: "Reset complete",
+      description: "Exercises have been reset to default values"
+    });
   };
 
   return (
@@ -805,15 +373,27 @@ export default function ExercisesPage() {
             </Card>
           </div>
 
-          <div className="lg:col-span-2 h-screen">
+          <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>
-                  Your Exercise Database ({exercises.length} exercises)
-                </CardTitle>
-                <CardDescription>
-                  All exercises available for your workouts
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>
+                      Your Exercise Database ({exercises.length} exercises)
+                    </CardTitle>
+                    <CardDescription>
+                      All exercises available for your workouts
+                    </CardDescription>
+                  </div>
+                  <Button
+                    onClick={resetToDefaults}
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-1" />
+                    Refresh
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4 max-h-[70vh] overflow-y-auto">

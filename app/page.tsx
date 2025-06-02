@@ -25,7 +25,7 @@ export default function HomePage() {
             <Dumbbell className="h-12 w-12 text-primary mr-3" />
             <h1 className="text-4xl font-bold">Home Workout Pro</h1>
           </div>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-base text-muted-foreground mb-8 max-w-2xl mx-auto">
             Your personal workout companion for home fitness. Create custom routines with dumbbells and bodyweight
             exercises, track your progress, and stay motivated on your fitness journey.
           </p>
@@ -92,13 +92,27 @@ export default function HomePage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
             <CardContent className="pt-6">
-              <div className="text-center">
-                <History className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <h3 className="font-semibold">Track Progress</h3>
-                <p className="text-sm text-muted-foreground">{recentWorkouts} workouts completed</p>
-              </div>
+              <Link href="/summary" className="block">
+                <div className="text-center">
+                  <History className="h-8 w-8 mx-auto mb-2 text-primary" />
+                  <h3 className="font-semibold">Track Progress</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {recentWorkouts > 0 
+                      ? `${recentWorkouts} workouts completed` 
+                      : 'No workouts yet'}
+                  </p>
+                  <Button 
+                    variant={recentWorkouts > 0 ? "default" : "outline"} 
+                    size="sm" 
+                    className="w-full"
+                    disabled={recentWorkouts === 0}
+                  >
+                    {recentWorkouts > 0 ? "View Progress" : "No Progress Yet"}
+                  </Button>
+                </div>
+              </Link>
             </CardContent>
           </Card>
         </div>

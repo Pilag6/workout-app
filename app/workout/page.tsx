@@ -261,7 +261,7 @@ export default function WorkoutPage() {
           <h1 className="text-3xl font-bold">Create Workout</h1>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-3 gap-6">
           <div className="space-y-6">
 
             <Card>
@@ -439,7 +439,7 @@ export default function WorkoutPage() {
             )}
           </div>
 
-          <div>
+          <div className="lg:col-span-2">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -459,7 +459,7 @@ export default function WorkoutPage() {
               </CardHeader>
               <CardContent>
                 {generatedWorkout.length > 0 ? (
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="space-y-4 max-h-[70vh] overflow-y-auto">
                     {generatedWorkout.map((exercise, index) => (
                       <div key={`${exercise.id}-${index}`} className="p-4 border rounded-lg">
                         <div className="flex items-start justify-between mb-3">
