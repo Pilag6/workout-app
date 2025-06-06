@@ -99,13 +99,13 @@ export default function HomePage() {
                   <History className="h-8 w-8 mx-auto mb-2 text-primary" />
                   <h3 className="font-semibold">Track Progress</h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    {recentWorkouts > 0 
-                      ? `${recentWorkouts} workouts completed` 
+                    {recentWorkouts > 0
+                      ? `${recentWorkouts} workouts completed`
                       : 'No workouts yet'}
                   </p>
-                  <Button 
-                    variant={recentWorkouts > 0 ? "default" : "outline"} 
-                    size="sm" 
+                  <Button
+                    variant={recentWorkouts > 0 ? "default" : "outline"}
+                    size="sm"
                     className="w-full"
                     disabled={recentWorkouts === 0}
                   >
