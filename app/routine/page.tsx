@@ -305,51 +305,52 @@ export default function RoutinePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="flex items-center justify-between mb-8">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-4xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-8 gap-3 sm:gap-0">
           <div className="flex items-center">
             <Link href="/workout">
-              <Button variant="ghost" size="sm" className="mr-4">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
+              <Button variant="ghost" size="sm" className="mr-2 sm:mr-4">
+                <ArrowLeft className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Back</span>
               </Button>
             </Link>
-            <h1 className="text-3xl font-bold">Active Workout</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Active Workout</h1>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={exportWorkout}>
-              <Download className="h-4 w-4 mr-2" />
-              Export
+          <div className="flex gap-2 self-start sm:self-auto">
+            <Button variant="outline" size="sm" onClick={exportWorkout} className="h-8 sm:h-9">
+              <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Export</span>
             </Button>
-            <Button onClick={finishWorkout} variant="destructive" size="sm">
-              Finish Workout
+            <Button onClick={finishWorkout} variant="destructive" size="sm" className="h-8 sm:h-9">
+              <span className="hidden sm:inline">Finish Workout</span>
+              <span className="sm:hidden">Finish</span>
             </Button>
           </div>
         </div>
 
-        <Card className="mb-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-          <CardContent className="pt-6">
-            <div className="text-center mb-4">
-              <div className="text-4xl font-bold text-primary mb-2">
+        <Card className="mb-4 sm:mb-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+          <CardContent className="pt-4 sm:pt-6">
+            <div className="text-center mb-3 sm:mb-4">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-1 sm:mb-2">
                 {Math.round(overallProgress)}%
               </div>
-              <p className="text-sm text-muted-foreground">Workout Progress</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Workout Progress</p>
             </div>
 
-            <div className="space-y-3">
-              <Progress value={overallProgress} className="h-3" />
+            <div className="space-y-2 sm:space-y-3">
+              <Progress value={overallProgress} className="h-2 sm:h-3" />
 
-              <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-semibold">{completedExercises}</div>
+                  <div className="text-lg sm:text-xl md:text-2xl font-semibold">{completedExercises}</div>
                   <div className="text-xs text-muted-foreground">of {totalExercises} exercises</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-semibold">{completedSets}</div>
+                  <div className="text-lg sm:text-xl md:text-2xl font-semibold">{completedSets}</div>
                   <div className="text-xs text-muted-foreground">of {totalSets} sets</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-semibold">
+                  <div className="text-lg sm:text-xl md:text-2xl font-semibold">
                     {workoutStartTime ? Math.round((Date.now() - workoutStartTime.getTime()) / 1000 / 60) : 0}m
                   </div>
                   <div className="text-xs text-muted-foreground">duration</div>
@@ -359,13 +360,12 @@ export default function RoutinePage() {
           </CardContent>
         </Card>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {workout.map((exercise, index) => {
             const exerciseProgress = progress[index]
             const isCurrent = index === currentExerciseIndex
             const isCompleted = exerciseProgress?.isCompleted
             const isCurrentAndResting = isCurrent && isResting
-            const isDragging = draggedIndex === index
 
             return (
               <Card
@@ -377,9 +377,9 @@ export default function RoutinePage() {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, index)}
                 onDragEnd={handleDragEnd}
-                className={`relative overflow-hidden transition-all duration-300 cursor-grab active:cursor-grabbing ${isCurrent ? "ring-2 ring-primary shadow-lg" : ""
+                className={`relative overflow-hidden transition-all duration-300 cursor-grab active:cursor-grabbing ${isCurrent ? "ring-2 ring-primary shadow-lg bg-primary/5 border-primary/20" : ""
                   } ${isCompleted ? "opacity-75" : ""
-                  } ${isCurrentAndResting ? "ring-4 ring-amber-400 shadow-amber-200 shadow-lg" : ""
+                  } ${isCurrentAndResting ? "ring-4 ring-amber-400 shadow-amber-200 shadow-lg bg-amber-50/50 border-amber-200" : ""
                   } ${draggedIndex === index
                     ? "opacity-50 scale-95 z-50"
                     : dragOverIndex === index && draggedIndex !== null
@@ -404,22 +404,22 @@ export default function RoutinePage() {
                   </div>
                 )}
 
-                <CardHeader className="pb-4 relative z-10">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
+                <CardHeader className="pb-3 sm:pb-4 relative z-10">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
+                    <CardTitle className="flex items-center gap-2 flex-wrap">
+                      <GripVertical className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground cursor-grab active:cursor-grabbing touch-manipulation" />
 
-                      {isCompleted && <Check className="h-5 w-5 text-green-500" />}
+                      {isCompleted && <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />}
                       <span
-                        className="cursor-pointer hover:text-primary transition-colors"
+                        className="cursor-pointer hover:text-primary transition-colors text-base sm:text-lg font-semibold"
                         onClick={() => openExerciseModal(exercise)}
                       >
                         {exercise.name}
                       </span>
-                      {isCurrent && !isCurrentAndResting && <Badge variant="default">Current</Badge>}
+                      {isCurrent && !isCurrentAndResting && <Badge variant="default" className="text-xs">Current</Badge>}
                       {isCurrentAndResting && (
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 text-xs">
                             <Clock className="h-3 w-3 mr-1" />
                             Rest: {restTimer}s
                           </Badge>
@@ -427,7 +427,7 @@ export default function RoutinePage() {
                             onClick={skipRest}
                             variant="outline"
                             size="sm"
-                            className="text-xs h-6 px-2"
+                            className="text-xs h-6 px-2 touch-manipulation"
                           >
                             <SkipForward className="h-3 w-3 mr-1" />
                             Skip
@@ -436,49 +436,51 @@ export default function RoutinePage() {
                       )}
                     </CardTitle>
 
-                    <div className="flex items-center gap-2">
-                      <div className="flex flex-col">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex flex-col order-last sm:order-none">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => moveExerciseUp(index)}
                           disabled={index === 0}
-                          className="h-5 w-8 p-0"
+                          className="h-6 w-8 p-0 touch-manipulation"
                         >
-                          <ChevronUp className="h-3 w-3" />
+                          <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => moveExerciseDown(index)}
                           disabled={index === workout.length - 1}
-                          className="h-5 w-8 p-0"
+                          className="h-6 w-8 p-0 touch-manipulation"
                         >
-                          <ChevronDown className="h-3 w-3" />
+                          <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </div>
 
-                      <div className="flex gap-2">
-                        <Badge variant="secondary">{exercise.muscleGroup}</Badge>
-                        <Badge variant="outline">{exercise.equipment}</Badge>
+                      <div className="flex gap-1 sm:gap-2 flex-wrap">
+                        <Badge variant="secondary" className="text-xs">{exercise.muscleGroup}</Badge>
+                        <Badge variant="outline" className="text-xs">{exercise.equipment}</Badge>
                         {exercise.youtubeUrl && (
-                          <Badge variant="outline" className="bg-red-50 text-red-700">
-                            📹 Video
+                          <Badge variant="outline" className="bg-red-50 text-red-700 text-xs">
+                            📹<span className="hidden sm:inline ml-1">Video</span>
                           </Badge>
                         )}
                       </div>
                     </div>
                   </div>
-                  {exercise.description && <CardDescription>{exercise.description}</CardDescription>}
+                  {exercise.description && (
+                    <CardDescription className="text-xs sm:text-sm mt-2">{exercise.description}</CardDescription>
+                  )}
                 </CardHeader>
 
                 <CardContent className="relative z-10">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="text-lg font-semibold">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0">
+                    <div className="text-sm sm:text-base md:text-lg font-semibold">
                       {exercise.sets} sets × {exercise.reps} reps
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-xs sm:text-sm text-muted-foreground">
                         {exerciseProgress?.completedSets || 0} / {exercise.sets} sets completed
                       </span>
                       {exerciseProgress?.completedSets > 0 && (
@@ -486,7 +488,7 @@ export default function RoutinePage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => uncompleteSet(index)}
-                          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive touch-manipulation"
                           title="Undo last set"
                         >
                           <Undo2 className="h-3 w-3" />
@@ -495,7 +497,7 @@ export default function RoutinePage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 flex-wrap mb-4">
+                  <div className="grid grid-cols-3 sm:flex gap-2 mb-3 sm:mb-4">
                     {Array.from({ length: exercise.sets }, (_, setIndex) => (
                       <Button
                         key={setIndex}
@@ -503,10 +505,10 @@ export default function RoutinePage() {
                         size="sm"
                         onClick={() => completeSet(index)}
                         disabled={setIndex !== (exerciseProgress?.completedSets || 0) || isCompleted}
-                        className="min-w-[60px]"
+                        className="min-w-[60px] h-9 sm:h-10 text-xs sm:text-sm touch-manipulation"
                       >
                         {setIndex < (exerciseProgress?.completedSets || 0) ? (
-                          <Check className="h-4 w-4" />
+                          <Check className="h-3 w-3 sm:h-4 sm:w-4" />
                         ) : (
                           `Set ${setIndex + 1}`
                         )}
