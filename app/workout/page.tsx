@@ -635,10 +635,10 @@ export default function WorkoutPage() {
                       <div
                         key={`${exercise.id}-${index}`}
                         className={`p-4 sm:p-6 border rounded-lg transition-all duration-200 ${draggedIndex === index
-                            ? 'opacity-50 scale-95'
-                            : dragOverIndex === index
-                              ? 'bg-primary/5 border-primary/30 scale-102'
-                              : 'bg-muted/20 hover:bg-muted/30'
+                          ? 'opacity-50 scale-95'
+                          : dragOverIndex === index
+                            ? 'bg-primary/5 border-primary/30 scale-102'
+                            : 'bg-muted/20 hover:bg-muted/30'
                           }`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, index)}
