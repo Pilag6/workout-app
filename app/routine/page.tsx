@@ -81,6 +81,14 @@ export default function RoutinePage() {
   }, [isResting, restTimer, toast])
 
   const completeSet = (exerciseIndex: number) => {
+    if (exerciseIndex !== currentExerciseIndex) {
+      setCurrentExerciseIndex(exerciseIndex)
+      if (isResting) {
+        setIsResting(false)
+        setRestTimer(0)
+      }
+    }
+
     const exercise = workout[exerciseIndex]
     const currentProgress = progress[exerciseIndex]
 
@@ -99,13 +107,11 @@ export default function RoutinePage() {
           title: "Exercise completed!",
           description: `Great job on ${exercise.name}`,
         })
-        // Auto-advance to next exercise
         if (exerciseIndex < workout.length - 1) {
           setCurrentExerciseIndex(exerciseIndex + 1)
         }
       } else {
-        // Start rest timer
-        setRestTimer(60) // 60 seconds rest
+        setRestTimer(60)
         setIsResting(true)
         toast({
           title: "Set completed!",
@@ -127,8 +133,7 @@ export default function RoutinePage() {
         ),
       )
 
-      // Stop rest timer if we're uncompleting a set during rest
-      if (isResting && exerciseIndex === currentExerciseIndex) {
+      if (exerciseIndex === currentExerciseIndex && isResting) {
         setIsResting(false)
         setRestTimer(0)
       }
@@ -147,21 +152,17 @@ export default function RoutinePage() {
     const newWorkout = [...workout]
     const newProgress = [...progress]
 
-    // Move exercise
     const [movedExercise] = newWorkout.splice(fromIndex, 1)
     newWorkout.splice(toIndex, 0, movedExercise)
 
-    // Move progress
     const [movedProgress] = newProgress.splice(fromIndex, 1)
     newProgress.splice(toIndex, 0, movedProgress)
 
-    // Always set current exercise to the first one (index 0)
     setCurrentExerciseIndex(0)
 
     setWorkout(newWorkout)
     setProgress(newProgress)
 
-    // Update localStorage
     localStorage.setItem("current-workout", JSON.stringify(newWorkout))
   }
 
@@ -177,7 +178,6 @@ export default function RoutinePage() {
     }
   }
 
-  // Enhanced Drag and Drop handlers
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index)
     e.dataTransfer.effectAllowed = 'move'
@@ -250,15 +250,12 @@ export default function RoutinePage() {
       })),
     }
 
-    // Save to history
     const history = JSON.parse(localStorage.getItem("workout-history") || "[]")
     history.push(workoutSummary)
     localStorage.setItem("workout-history", JSON.stringify(history))
 
-    // Clear current workout
     localStorage.removeItem("current-workout")
 
-    // Navigate to summary
     localStorage.setItem("workout-summary", JSON.stringify(workoutSummary))
     router.push("/summary")
   }
@@ -410,7 +407,6 @@ export default function RoutinePage() {
                 <CardHeader className="pb-4 relative z-10">
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
-                      {/* Drag Handle */}
                       <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
 
                       {isCompleted && <Check className="h-5 w-5 text-green-500" />}
@@ -441,7 +437,6 @@ export default function RoutinePage() {
                     </CardTitle>
 
                     <div className="flex items-center gap-2">
-                      {/* Reorder Controls */}
                       <div className="flex flex-col">
                         <Button
                           variant="ghost"
@@ -463,7 +458,6 @@ export default function RoutinePage() {
                         </Button>
                       </div>
 
-                      {/* Exercise Badges */}
                       <div className="flex gap-2">
                         <Badge variant="secondary">{exercise.muscleGroup}</Badge>
                         <Badge variant="outline">{exercise.equipment}</Badge>
