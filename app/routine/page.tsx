@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { ArrowLeft, Check, Clock, SkipForward, Download } from "lucide-react"
+import { ArrowLeft, Check, Clock, SkipForward, Download, ChevronUp, ChevronDown, GripVertical, Undo2 } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -37,6 +37,8 @@ export default function RoutinePage() {
   const [workoutStartTime, setWorkoutStartTime] = useState<Date | null>(null)
   const [selectedExercise, setSelectedExercise] = useState<WorkoutExercise | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -113,6 +115,118 @@ export default function RoutinePage() {
     }
   }
 
+  const uncompleteSet = (exerciseIndex: number) => {
+    const currentProgress = progress[exerciseIndex]
+
+    if (currentProgress.completedSets > 0) {
+      const newCompletedSets = currentProgress.completedSets - 1
+
+      setProgress((prev) =>
+        prev.map((p, i) =>
+          i === exerciseIndex ? { ...p, completedSets: newCompletedSets, isCompleted: false } : p,
+        ),
+      )
+
+      // Stop rest timer if we're uncompleting a set during rest
+      if (isResting && exerciseIndex === currentExerciseIndex) {
+        setIsResting(false)
+        setRestTimer(0)
+      }
+
+      toast({
+        title: "Set uncompleted",
+        description: "You can now redo this set",
+        variant: "default"
+      })
+    }
+  }
+
+  const moveExercise = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= workout.length) return
+
+    const newWorkout = [...workout]
+    const newProgress = [...progress]
+
+    // Move exercise
+    const [movedExercise] = newWorkout.splice(fromIndex, 1)
+    newWorkout.splice(toIndex, 0, movedExercise)
+
+    // Move progress
+    const [movedProgress] = newProgress.splice(fromIndex, 1)
+    newProgress.splice(toIndex, 0, movedProgress)
+
+    // Always set current exercise to the first one (index 0)
+    setCurrentExerciseIndex(0)
+
+    setWorkout(newWorkout)
+    setProgress(newProgress)
+
+    // Update localStorage
+    localStorage.setItem("current-workout", JSON.stringify(newWorkout))
+  }
+
+  const moveExerciseUp = (index: number) => {
+    if (index > 0) {
+      moveExercise(index, index - 1)
+    }
+  }
+
+  const moveExerciseDown = (index: number) => {
+    if (index < workout.length - 1) {
+      moveExercise(index, index + 1)
+    }
+  }
+
+  // Enhanced Drag and Drop handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/html', '')
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverIndex(index)
+  }
+
+  const handleDragEnter = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverIndex(null)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null)
+      setDragOverIndex(null)
+      return
+    }
+
+    moveExercise(draggedIndex, dropIndex)
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+
+    const draggedExercise = workout[draggedIndex]
+    toast({
+      title: "Exercise reordered",
+      description: `Moved ${draggedExercise.name} to position ${dropIndex + 1}`,
+    })
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
   const skipRest = () => {
     setIsResting(false)
     setRestTimer(0)
@@ -120,7 +234,7 @@ export default function RoutinePage() {
 
   const finishWorkout = () => {
     const completedExercises = progress.filter((p) => p.isCompleted).length
-    const totalSets = progress.reduce((sum, p) => sum + p.completedSets, 0)
+    const totalSets = workout.reduce((sum, ex) => sum + ex.sets, 0)
     const duration = workoutStartTime ? Math.round((Date.now() - workoutStartTime.getTime()) / 1000 / 60) : 0
 
     const workoutSummary = {
@@ -185,6 +299,8 @@ export default function RoutinePage() {
   const totalExercises = workout.length
   const completedExercises = progress.filter((p) => p.isCompleted).length
   const overallProgress = totalExercises > 0 ? (completedExercises / totalExercises) * 100 : 0
+  const totalSets = workout.reduce((sum, ex) => sum + ex.sets, 0)
+  const completedSets = progress.reduce((sum, p) => sum + p.completedSets, 0)
 
   if (workout.length === 0) {
     return <div>Loading...</div>
@@ -214,46 +330,89 @@ export default function RoutinePage() {
           </div>
         </div>
 
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Overall Progress</span>
-            <span className="text-sm text-muted-foreground">
-              {completedExercises} / {totalExercises} exercises
-            </span>
-          </div>
-          <Progress value={overallProgress} className="h-2" />
-        </div>
-
-        {isResting && (
-          <Card className="mb-6 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <Clock className="h-8 w-8 mx-auto mb-2 text-amber-600" />
-                <h3 className="font-semibold mb-2">Rest Time</h3>
-                <div className="text-2xl font-bold mb-4">{restTimer}s</div>
-                <Button onClick={skipRest} variant="outline">
-                  <SkipForward className="h-4 w-4 mr-2" />
-                  Skip Rest
-                </Button>
+        <Card className="mb-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+          <CardContent className="pt-6">
+            <div className="text-center mb-4">
+              <div className="text-4xl font-bold text-primary mb-2">
+                {Math.round(overallProgress)}%
               </div>
-            </CardContent>
-          </Card>
-        )}
+              <p className="text-sm text-muted-foreground">Workout Progress</p>
+            </div>
+
+            <div className="space-y-3">
+              <Progress value={overallProgress} className="h-3" />
+
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-semibold">{completedExercises}</div>
+                  <div className="text-xs text-muted-foreground">of {totalExercises} exercises</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-semibold">{completedSets}</div>
+                  <div className="text-xs text-muted-foreground">of {totalSets} sets</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-semibold">
+                    {workoutStartTime ? Math.round((Date.now() - workoutStartTime.getTime()) / 1000 / 60) : 0}m
+                  </div>
+                  <div className="text-xs text-muted-foreground">duration</div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="space-y-4">
           {workout.map((exercise, index) => {
             const exerciseProgress = progress[index]
             const isCurrent = index === currentExerciseIndex
             const isCompleted = exerciseProgress?.isCompleted
+            const isCurrentAndResting = isCurrent && isResting
+            const isDragging = draggedIndex === index
 
             return (
               <Card
                 key={`${exercise.id}-${index}`}
-                className={`${isCurrent ? "ring-2 ring-primary" : ""} ${isCompleted ? "opacity-75" : ""}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnter={(e) => handleDragEnter(e, index)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`relative overflow-hidden transition-all duration-300 cursor-grab active:cursor-grabbing ${isCurrent ? "ring-2 ring-primary shadow-lg" : ""
+                  } ${isCompleted ? "opacity-75" : ""
+                  } ${isCurrentAndResting ? "ring-4 ring-amber-400 shadow-amber-200 shadow-lg" : ""
+                  } ${draggedIndex === index
+                    ? "opacity-50 scale-95 z-50"
+                    : dragOverIndex === index && draggedIndex !== null
+                      ? "bg-primary/5 border-primary/30 scale-102 shadow-lg ring-2 ring-primary/20"
+                      : "hover:shadow-md"
+                  }`}
               >
-                <CardHeader className="pb-4">
+                {isCurrentAndResting && (
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div
+                      className="absolute inset-0 bg-gradient-to-r from-amber-100/30 to-amber-200/30 dark:from-amber-900/20 dark:to-amber-800/20"
+                      style={{
+                        animation: `pulse 2s ease-in-out infinite`
+                      }}
+                    />
+                    <div
+                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-amber-300/40 to-amber-400/40 transition-all duration-1000 ease-linear"
+                      style={{
+                        width: `${((60 - restTimer) / 60) * 100}%`
+                      }}
+                    />
+                  </div>
+                )}
+
+                <CardHeader className="pb-4 relative z-10">
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
+                      {/* Drag Handle */}
+                      <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
+
                       {isCompleted && <Check className="h-5 w-5 text-green-500" />}
                       <span
                         className="cursor-pointer hover:text-primary transition-colors"
@@ -261,27 +420,84 @@ export default function RoutinePage() {
                       >
                         {exercise.name}
                       </span>
-                      {isCurrent && <Badge variant="default">Current</Badge>}
-                    </CardTitle>
-                    <div className="flex gap-2">
-                      <Badge variant="secondary">{exercise.muscleGroup}</Badge>
-                      <Badge variant="outline">{exercise.equipment}</Badge>
-                      {exercise.youtubeUrl && (
-                        <Badge variant="outline" className="bg-red-50 text-red-700">
-                          📹 Video
-                        </Badge>
+                      {isCurrent && !isCurrentAndResting && <Badge variant="default">Current</Badge>}
+                      {isCurrentAndResting && (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Rest: {restTimer}s
+                          </Badge>
+                          <Button
+                            onClick={skipRest}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-6 px-2"
+                          >
+                            <SkipForward className="h-3 w-3 mr-1" />
+                            Skip
+                          </Button>
+                        </div>
                       )}
+                    </CardTitle>
+
+                    <div className="flex items-center gap-2">
+                      {/* Reorder Controls */}
+                      <div className="flex flex-col">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => moveExerciseUp(index)}
+                          disabled={index === 0}
+                          className="h-5 w-8 p-0"
+                        >
+                          <ChevronUp className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => moveExerciseDown(index)}
+                          disabled={index === workout.length - 1}
+                          className="h-5 w-8 p-0"
+                        >
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+
+                      {/* Exercise Badges */}
+                      <div className="flex gap-2">
+                        <Badge variant="secondary">{exercise.muscleGroup}</Badge>
+                        <Badge variant="outline">{exercise.equipment}</Badge>
+                        {exercise.youtubeUrl && (
+                          <Badge variant="outline" className="bg-red-50 text-red-700">
+                            📹 Video
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {exercise.description && <CardDescription>{exercise.description}</CardDescription>}
                 </CardHeader>
-                <CardContent>
+
+                <CardContent className="relative z-10">
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-lg font-semibold">
                       {exercise.sets} sets × {exercise.reps} reps
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {exerciseProgress?.completedSets || 0} / {exercise.sets} sets completed
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {exerciseProgress?.completedSets || 0} / {exercise.sets} sets completed
+                      </span>
+                      {exerciseProgress?.completedSets > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => uncompleteSet(index)}
+                          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                          title="Undo last set"
+                        >
+                          <Undo2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
 
