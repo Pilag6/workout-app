@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Shuffle, Play, Dumbbell, User, Upload, Search, Filter, Plus, X } from "lucide-react"
+import { ArrowLeft, Shuffle, Play, Dumbbell, User, Upload, Search, Filter, Plus, X, ChevronUp, ChevronDown, GripVertical } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
@@ -43,6 +43,10 @@ export default function WorkoutPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedMuscleFilter, setSelectedMuscleFilter] = useState<string>("all")
   const [selectedEquipmentFilter, setSelectedEquipmentFilter] = useState<string>("all")
+
+  // Drag & Drop states
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   const router = useRouter()
   const { toast } = useToast()
@@ -92,6 +96,95 @@ export default function WorkoutPage() {
     toast({
       title: "Exercise added!",
       description: `${exercise.name} added to your workout`,
+    })
+  }
+
+  // Drag & Drop functions
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/html', '')
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverIndex(index)
+  }
+
+  const handleDragEnter = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverIndex(null)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null)
+      setDragOverIndex(null)
+      return
+    }
+
+    const newWorkout = [...generatedWorkout]
+    const draggedItem = newWorkout[draggedIndex]
+
+    newWorkout.splice(draggedIndex, 1)
+    const adjustedDropIndex = draggedIndex < dropIndex ? dropIndex - 1 : dropIndex
+    newWorkout.splice(adjustedDropIndex, 0, draggedItem)
+
+    setGeneratedWorkout(newWorkout)
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+
+    toast({
+      title: "Exercise reordered",
+      description: `Moved ${draggedItem.name} to position ${adjustedDropIndex + 1}`,
+    })
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  // Arrow movement functions
+  const moveExerciseUp = (index: number) => {
+    if (index === 0) return
+
+    const newWorkout = [...generatedWorkout]
+    const temp = newWorkout[index]
+    newWorkout[index] = newWorkout[index - 1]
+    newWorkout[index - 1] = temp
+
+    setGeneratedWorkout(newWorkout)
+
+    toast({
+      title: "Exercise moved up",
+      description: `Moved ${temp.name} up one position`,
+    })
+  }
+
+  const moveExerciseDown = (index: number) => {
+    if (index === generatedWorkout.length - 1) return
+
+    const newWorkout = [...generatedWorkout]
+    const temp = newWorkout[index]
+    newWorkout[index] = newWorkout[index + 1]
+    newWorkout[index + 1] = temp
+
+    setGeneratedWorkout(newWorkout)
+
+    toast({
+      title: "Exercise moved down",
+      description: `Moved ${temp.name} down one position`,
     })
   }
 
@@ -254,52 +347,53 @@ export default function WorkoutPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto px-6 py-8 max-w-[95vw]">
-        <div className="flex items-center mb-8">
+      <div className="mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-[95vw]">
+        <div className="flex items-center mb-6 sm:mb-8">
           <Link href="/">
             <Button variant="ghost" size="sm" className="mr-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold">Create Workout</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Create Workout</h1>
         </div>
 
-        <div className="grid lg:grid-cols-7 gap-8">
-          {/* Left Column - Exercise Browser & Selection */}
-          <div className="lg:col-span-3 space-y-6">
+        {/* Mobile/Tablet: Stack layout, Desktop: Side by side */}
+        <div className="flex flex-col lg:grid lg:grid-cols-7 gap-4 sm:gap-6 lg:gap-8">
+          {/* Exercise Browser & Selection */}
+          <div className="lg:col-span-3 space-y-4 sm:space-y-6">
             <Tabs defaultValue="browse" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="browse">Browse Exercises</TabsTrigger>
-                <TabsTrigger value="generate">Quick Generate</TabsTrigger>
+                <TabsTrigger value="browse" className="text-sm">Browse Exercises</TabsTrigger>
+                <TabsTrigger value="generate" className="text-sm">Quick Generate</TabsTrigger>
               </TabsList>
 
               <TabsContent value="browse" className="space-y-4">
                 {/* Search and Filters */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center text-lg">
                       <Search className="h-5 w-5 mr-2" />
                       Find Exercises
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <Label htmlFor="search">Search by name</Label>
+                      <Label htmlFor="search" className="text-sm">Search by name</Label>
                       <Input
                         id="search"
                         placeholder="Search exercises..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="mt-1"
+                        className="mt-1 h-10"
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <Label>Muscle Group</Label>
+                        <Label className="text-sm">Muscle Group</Label>
                         <Select value={selectedMuscleFilter} onValueChange={setSelectedMuscleFilter}>
-                          <SelectTrigger className="mt-1">
+                          <SelectTrigger className="mt-1 h-10">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -314,9 +408,9 @@ export default function WorkoutPage() {
                       </div>
 
                       <div>
-                        <Label>Equipment</Label>
+                        <Label className="text-sm">Equipment</Label>
                         <Select value={selectedEquipmentFilter} onValueChange={setSelectedEquipmentFilter}>
-                          <SelectTrigger className="mt-1">
+                          <SelectTrigger className="mt-1 h-10">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -327,42 +421,59 @@ export default function WorkoutPage() {
                         </Select>
                       </div>
                     </div>
+
+                    {/* Clear Filters Button */}
+                    {(searchTerm || selectedMuscleFilter !== "all" || selectedEquipmentFilter !== "all") && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSearchTerm("")
+                          setSelectedMuscleFilter("all")
+                          setSelectedEquipmentFilter("all")
+                        }}
+                        className="w-full h-10"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Clear Filters
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
 
                 {/* Exercise List */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Available Exercises ({filteredExercises.length})</CardTitle>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg">Available Exercises ({filteredExercises.length})</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3 max-h-[65vh] overflow-y-auto">
+                    <div className="space-y-3 max-h-[50vh] sm:max-h-[60vh] lg:max-h-[65vh] overflow-y-auto">
                       {filteredExercises.map((exercise) => {
                         const isInWorkout = generatedWorkout.some(ex => ex.id === exercise.id)
                         return (
                           <div key={exercise.id} className="p-4 border rounded-lg hover:border-primary/20 transition-colors">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1 pr-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                                   <h4
-                                    className="font-medium cursor-pointer hover:text-primary transition-colors"
+                                    className="font-medium cursor-pointer hover:text-primary transition-colors truncate"
                                     onClick={() => openExerciseModal(exercise)}
                                   >
                                     {exercise.name}
                                   </h4>
-                                  <Badge variant="secondary" className="text-xs">
+                                  <Badge variant="secondary" className="text-xs shrink-0">
                                     {exercise.muscleGroup}
                                   </Badge>
-                                  <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                                  <Badge variant="outline" className="flex items-center gap-1 text-xs shrink-0">
                                     {exercise.equipment === "dumbbells" ? (
                                       <Dumbbell className="h-3 w-3" />
                                     ) : (
                                       <User className="h-3 w-3" />
                                     )}
-                                    {exercise.equipment}
+                                    <span className="hidden sm:inline">{exercise.equipment}</span>
                                   </Badge>
                                   {exercise.youtubeUrl && (
-                                    <Badge variant="outline" className="bg-red-50 text-red-700 text-xs">
+                                    <Badge variant="outline" className="bg-red-50 text-red-700 text-xs shrink-0">
                                       📹
                                     </Badge>
                                   )}
@@ -377,17 +488,17 @@ export default function WorkoutPage() {
                                 size="sm"
                                 onClick={() => addExerciseToWorkout(exercise)}
                                 disabled={isInWorkout}
-                                className="shrink-0"
+                                className="shrink-0 h-9 px-3"
                               >
                                 {isInWorkout ? (
                                   <>
-                                    <X className="h-3 w-3 mr-1" />
-                                    Added
+                                    <X className="h-3 w-3 sm:mr-1" />
+                                    <span className="hidden sm:inline">Added</span>
                                   </>
                                 ) : (
                                   <>
-                                    <Plus className="h-3 w-3 mr-1" />
-                                    Add
+                                    <Plus className="h-3 w-3 sm:mr-1" />
+                                    <span className="hidden sm:inline">Add</span>
                                   </>
                                 )}
                               </Button>
@@ -410,8 +521,8 @@ export default function WorkoutPage() {
               <TabsContent value="generate" className="space-y-4">
                 {/* Import Workout */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center text-lg">
                       <Upload className="h-5 w-5 mr-2" />
                       Import Workout
                     </CardTitle>
@@ -421,24 +532,26 @@ export default function WorkoutPage() {
                       type="file"
                       accept=".json"
                       onChange={handleWorkoutUpload}
+                      className="h-10"
                     />
                   </CardContent>
                 </Card>
 
                 {/* Quick Generate */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Quick Generate</CardTitle>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg">Quick Generate</CardTitle>
                     <CardDescription>Select muscle groups for random workout</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {muscleGroups.map((group) => (
-                        <div key={group} className="flex items-center space-x-2">
+                        <div key={group} className="flex items-center space-x-2 py-1">
                           <Checkbox
                             id={group}
                             checked={selectedMuscleGroups.includes(group)}
                             onCheckedChange={() => toggleMuscleGroup(group)}
+                            className="h-5 w-5"
                           />
                           <label htmlFor={group} className="text-sm cursor-pointer">
                             {group.charAt(0).toUpperCase() + group.slice(1)}
@@ -448,20 +561,20 @@ export default function WorkoutPage() {
                     </div>
 
                     <div>
-                      <Label>Exercises per group: {exercisesPerGroup}</Label>
+                      <Label className="text-sm">Exercises per group: {exercisesPerGroup}</Label>
                       <input
                         type="range"
                         min="1"
                         max="5"
                         value={exercisesPerGroup}
                         onChange={(e) => setExercisesPerGroup(Number(e.target.value))}
-                        className="w-full mt-2"
+                        className="w-full mt-2 h-6"
                       />
                     </div>
 
                     <Button
                       onClick={generateWorkout}
-                      className="w-full"
+                      className="w-full h-10"
                       disabled={selectedMuscleGroups.length === 0}
                     >
                       <Shuffle className="h-4 w-4 mr-2" />
@@ -473,13 +586,13 @@ export default function WorkoutPage() {
             </Tabs>
           </div>
 
-          {/* Right Column - Workout Editor */}
+          {/* Workout Editor */}
           <div className="lg:col-span-4">
             <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
+              <CardHeader className="pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <CardTitle className="flex items-center">
+                    <CardTitle className="flex items-center text-lg sm:text-xl">
                       My Workout
                       {generatedWorkout.length > 0 && (
                         <Badge variant="secondary" className="ml-2">
@@ -487,9 +600,9 @@ export default function WorkoutPage() {
                         </Badge>
                       )}
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="mt-1">
                       {generatedWorkout.length > 0
-                        ? "Edit sets, reps, and manage your workout"
+                        ? "Drag to reorder, edit sets & reps, and manage your workout"
                         : "Add exercises to build your workout"}
                     </CardDescription>
                   </div>
@@ -500,12 +613,15 @@ export default function WorkoutPage() {
                           variant="outline"
                           size="sm"
                           onClick={clearWorkout}
+                          className="h-9"
                         >
-                          Clear All
+                          <span className="hidden sm:inline">Clear All</span>
+                          <span className="sm:hidden">Clear</span>
                         </Button>
-                        <Button onClick={startWorkout} size="sm">
-                          <Play className="h-4 w-4 mr-2" />
-                          Start Workout
+                        <Button onClick={startWorkout} size="sm" className="h-9">
+                          <Play className="h-4 w-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Start Workout</span>
+                          <span className="sm:hidden">Start</span>
                         </Button>
                       </>
                     )}
@@ -514,85 +630,144 @@ export default function WorkoutPage() {
               </CardHeader>
               <CardContent>
                 {generatedWorkout.length > 0 ? (
-                  <div className="grid gap-4 max-h-[80vh] overflow-y-auto">
+                  <div className="space-y-4 max-h-[60vh] sm:max-h-[70vh] lg:max-h-[80vh] overflow-y-auto">
                     {generatedWorkout.map((exercise, index) => (
-                      <div key={`${exercise.id}-${index}`} className="p-6 border rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1 pr-4">
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <h3
-                                className="text-lg font-semibold cursor-pointer hover:text-primary transition-colors"
-                                onClick={() => openExerciseModal(exercise)}
-                              >
-                                {exercise.name}
-                              </h3>
-                              <Badge variant="secondary" className="text-sm">
-                                {exercise.muscleGroup}
-                              </Badge>
-                              <Badge variant="outline" className="flex items-center gap-1 text-sm">
-                                {exercise.equipment === "dumbbells" ? (
-                                  <Dumbbell className="h-4 w-4" />
-                                ) : (
-                                  <User className="h-4 w-4" />
-                                )}
-                                {exercise.equipment}
-                              </Badge>
-                              {exercise.youtubeUrl && (
-                                <Badge variant="outline" className="bg-red-50 text-red-700 text-sm">
-                                  📹 Video
-                                </Badge>
-                              )}
+                      <div
+                        key={`${exercise.id}-${index}`}
+                        className={`p-4 sm:p-6 border rounded-lg transition-all duration-200 ${draggedIndex === index
+                            ? 'opacity-50 scale-95'
+                            : dragOverIndex === index
+                              ? 'bg-primary/5 border-primary/30 scale-102'
+                              : 'bg-muted/20 hover:bg-muted/30'
+                          }`}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDragEnter={(e) => handleDragEnter(e, index)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, index)}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <div className="flex items-start gap-3 sm:gap-4">
+                          {/* Drag Handle */}
+                          <div className="flex flex-col items-center pt-1 shrink-0">
+                            <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing" />
+                            <div className="text-xs text-muted-foreground mt-1 font-mono">
+                              #{index + 1}
                             </div>
-                            {exercise.description && (
-                              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                                {exercise.description}
-                              </p>
-                            )}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeExercise(index)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <div className="flex items-center gap-8">
-                          <div className="flex items-center gap-3">
-                            <Label className="text-base font-medium min-w-[40px]">Sets:</Label>
-                            <input
-                              type="number"
-                              min="1"
-                              max="10"
-                              value={exercise.sets}
-                              onChange={(e) => updateExercise(index, "sets", Number(e.target.value))}
-                              className="w-20 px-3 py-2 text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                            />
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Label className="text-base font-medium min-w-[40px]">Reps:</Label>
-                            <input
-                              type="number"
-                              min="1"
-                              max="50"
-                              value={exercise.reps}
-                              onChange={(e) => updateExercise(index, "reps", Number(e.target.value))}
-                              className="w-20 px-3 py-2 text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                            />
-                          </div>
-                          <div className="text-sm text-muted-foreground ml-auto">
-                            Total: {exercise.sets} × {exercise.reps} = {exercise.sets * exercise.reps} reps
+
+                          {/* Exercise Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-3 sm:mb-4">
+                              <div className="flex-1 pr-2 min-w-0">
+                                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                  <h3
+                                    className="text-base sm:text-lg font-semibold cursor-pointer hover:text-primary transition-colors"
+                                    onClick={() => openExerciseModal(exercise)}
+                                  >
+                                    {exercise.name}
+                                  </h3>
+                                  <Badge variant="secondary" className="text-xs sm:text-sm shrink-0">
+                                    {exercise.muscleGroup}
+                                  </Badge>
+                                  <Badge variant="outline" className="flex items-center gap-1 text-xs sm:text-sm shrink-0">
+                                    {exercise.equipment === "dumbbells" ? (
+                                      <Dumbbell className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    ) : (
+                                      <User className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    )}
+                                    <span className="hidden sm:inline">{exercise.equipment}</span>
+                                  </Badge>
+                                  {exercise.youtubeUrl && (
+                                    <Badge variant="outline" className="bg-red-50 text-red-700 text-xs sm:text-sm shrink-0">
+                                      📹<span className="hidden sm:inline ml-1">Video</span>
+                                    </Badge>
+                                  )}
+                                </div>
+                                {exercise.description && (
+                                  <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3 line-clamp-2">
+                                    {exercise.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Controls Row */}
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                              <div className="flex items-center gap-4 sm:gap-6 lg:gap-8">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                  <Label className="text-sm sm:text-base font-medium min-w-[35px] sm:min-w-[40px]">Sets:</Label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    value={exercise.sets}
+                                    onChange={(e) => updateExercise(index, "sets", Number(e.target.value))}
+                                    className="w-16 sm:w-20 px-2 sm:px-3 py-1 sm:py-2 text-sm sm:text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                  <Label className="text-sm sm:text-base font-medium min-w-[35px] sm:min-w-[40px]">Reps:</Label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max="50"
+                                    value={exercise.reps}
+                                    onChange={(e) => updateExercise(index, "reps", Number(e.target.value))}
+                                    className="w-16 sm:w-20 px-2 sm:px-3 py-1 sm:py-2 text-sm sm:text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                  />
+                                </div>
+                                <div className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
+                                  Total: {exercise.sets} × {exercise.reps} = {exercise.sets * exercise.reps} reps
+                                </div>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex items-center gap-1 self-start sm:self-auto">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => moveExerciseUp(index)}
+                                  disabled={index === 0}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <ChevronUp className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => moveExerciseDown(index)}
+                                  disabled={index === generatedWorkout.length - 1}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <ChevronDown className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeExercise(index)}
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 ml-2"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Mobile total display */}
+                            <div className="text-xs text-muted-foreground mt-2 sm:hidden">
+                              Total: {exercise.sets} × {exercise.reps} = {exercise.sets * exercise.reps} reps
+                            </div>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-16 text-muted-foreground">
-                    <Dumbbell className="h-20 w-20 mx-auto mb-6 opacity-50" />
-                    <h3 className="text-xl font-semibold mb-3">No exercises in workout</h3>
-                    <p className="text-base max-w-md mx-auto">
+                  <div className="text-center py-12 sm:py-16 text-muted-foreground">
+                    <Dumbbell className="h-16 w-16 sm:h-20 sm:w-20 mx-auto mb-4 sm:mb-6 opacity-50" />
+                    <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3">No exercises in workout</h3>
+                    <p className="text-sm sm:text-base max-w-md mx-auto px-4">
                       Browse exercises on the left or generate a quick workout to get started!
                     </p>
                   </div>
