@@ -309,9 +309,9 @@ export default function RoutinePage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-8 gap-3 sm:gap-0">
           <div className="flex items-center">
             <Link href="/workout">
-              <Button variant="ghost" size="sm" className="mr-2 sm:mr-4">
-                <ArrowLeft className="h-4 w-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Back</span>
+              <Button variant="ghost" size="sm" className="mr-4">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
               </Button>
             </Link>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Active Workout</h1>

@@ -474,7 +474,7 @@ export default function WorkoutPage() {
                                   </Badge>
                                   {exercise.youtubeUrl && (
                                     <Badge variant="outline" className="bg-red-50 text-red-700 text-xs shrink-0">
-                                      📹
+                                      📹 Video
                                     </Badge>
                                   )}
                                 </div>
