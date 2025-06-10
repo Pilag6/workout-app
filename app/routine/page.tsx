@@ -436,37 +436,35 @@ export default function RoutinePage() {
                       )}
                     </CardTitle>
 
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="flex flex-col order-last sm:order-none">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => moveExerciseUp(index)}
-                          disabled={index === 0}
-                          className="h-6 w-8 p-0 touch-manipulation"
-                        >
-                          <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => moveExerciseDown(index)}
-                          disabled={index === workout.length - 1}
-                          className="h-6 w-8 p-0 touch-manipulation"
-                        >
-                          <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
-                        </Button>
-                      </div>
+                    <div className="flex flex-row gap-1 order-last sm:order-none">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => moveExerciseUp(index)}
+                        disabled={index === 0}
+                        className="h-6 w-8 p-0 touch-manipulation"
+                      >
+                        <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => moveExerciseDown(index)}
+                        disabled={index === workout.length - 1}
+                        className="h-6 w-8 p-0 touch-manipulation"
+                      >
+                        <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </Button>
+                    </div>
 
-                      <div className="flex gap-1 sm:gap-2 flex-wrap">
-                        <Badge variant="secondary" className="text-xs">{exercise.muscleGroup}</Badge>
-                        <Badge variant="outline" className="text-xs">{exercise.equipment}</Badge>
-                        {exercise.youtubeUrl && (
-                          <Badge variant="outline" className="bg-red-50 text-red-700 text-xs">
-                            📹<span className="hidden sm:inline ml-1">Video</span>
-                          </Badge>
-                        )}
-                      </div>
+                    <div className="flex gap-1 sm:gap-2 flex-wrap">
+                      <Badge variant="secondary" className="text-xs">{exercise.muscleGroup}</Badge>
+                      <Badge variant="outline" className="text-xs">{exercise.equipment}</Badge>
+                      {exercise.youtubeUrl && (
+                        <Badge variant="outline" className="bg-red-50 text-red-700 text-xs">
+                          📹<span className="hidden sm:inline ml-1">Video</span>
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   {exercise.description && (
