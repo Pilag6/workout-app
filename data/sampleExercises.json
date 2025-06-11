@@ -224,80 +224,91 @@
   },
   {
     "id": 29,
-    "name": "Chin-ups",
+    "name": "DB Waiter Curls",
     "muscleGroup": "biceps",
-    "equipment": "bodyweight",
-    "description": "Pull your body up with an underhand grip, focusing on biceps engagement."
+    "equipment": "dumbbells",
+    "description": "Hold one dumbbell vertically with both hands under the top plate and curl it up like serving a tray.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=DjgrEWlgGaY&ab_channel=FunctionalBodybuilding"
   },
   {
     "id": 30,
-    "name": "Commando Pull-ups",
+    "name": "DB Around‑the‑World Curls",
     "muscleGroup": "biceps",
-    "equipment": "bodyweight",
-    "description": "Grip a pull-up bar with hands close together and alternate sides while pulling up."
+    "equipment": "dumbbells",
+    "description": "Hold a dumbbell by the end; perform a full 360° arc in front of your body, curling through 0–12 o'clock and back down slowly.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=_91Uo7ev_f8&ab_channel=StrongWithStef"
   },
   {
     "id": 31,
     "name": "DB Concentration Curls",
     "muscleGroup": "biceps",
     "equipment": "dumbbells",
-    "description": "Sit and curl a dumbbell with your elbow resting on your thigh."
+    "description": "Sit and curl a dumbbell with your elbow resting on your thigh.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=VMbDQ8PZazY&ab_channel=AtomicAthlete"
   },
   {
     "id": 32,
     "name": "DB Cross-Body Hammer Curls",
     "muscleGroup": "biceps",
     "equipment": "dumbbells",
-    "description": "Curl each dumbbell across your body toward the opposite shoulder with palms facing in."
+    "description": "Curl each dumbbell across your body toward the opposite shoulder with palms facing in.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=EPA4fyTbHPc&ab_channel=FitGent"
   },
   {
     "id": 33,
     "name": "DB Incline Curls",
     "muscleGroup": "biceps",
     "equipment": "dumbbells",
-    "description": "Lie back on an incline and curl dumbbells with full range of motion."
+    "description": "Lie back on an incline and curl dumbbells with full range of motion.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=FM7725AeXPA&ab_channel=NikkieyStott"
   },
   {
     "id": 34,
-    "name": "DB Preacher Curls (on bench)",
+    "name": "DB Preacher Curls",
     "muscleGroup": "biceps",
     "equipment": "dumbbells",
-    "description": "Rest your upper arm on an incline bench and curl the dumbbell up."
+    "description": "Rest your upper arm on an incline bench or chair and curl the dumbbell up.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=fuK3nFvwgXk&ab_channel=RenaissancePeriodization"
   },
   {
     "id": 35,
     "name": "DB Reverse Curls",
     "muscleGroup": "biceps",
     "equipment": "dumbbells",
-    "description": "Curl dumbbells with palms facing down to target the brachialis."
+    "description": "Curl dumbbells with palms facing down to target the brachialis.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=hUA-fIpM7nA&ab_channel=OPEXFitness"
   },
   {
     "id": 36,
-    "name": "DB Spider Curls",
+    "name": "DB Wall Curls",
     "muscleGroup": "biceps",
     "equipment": "dumbbells",
-    "description": "Lie face down on an incline bench and curl the dumbbells vertically toward your shoulders."
+    "description": "Stand with your back, elbows, and shoulders against a wall and curl the dumbbells without moving your upper arms to isolate the biceps.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=1Ulf_nDuYao&ab_channel=PRFitness"
   },
   {
     "id": 37,
-    "name": "Dumbbell Bicep Curls",
+    "name": "DB Bicep Curls",
     "muscleGroup": "biceps",
     "equipment": "dumbbells",
-    "description": "Lift the dumbbells toward your shoulders by flexing your elbows."
+    "description": "Lift the dumbbells toward your shoulders by flexing your elbows.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=HnHuhf4hEWY&ab_channel=FunctionalBodybuilding"
   },
   {
     "id": 38,
-    "name": "Dumbbell Curls",
+    "name": "DB Reverse Zottman Curls",
     "muscleGroup": "biceps",
     "equipment": "dumbbells",
-    "description": "Curl the dumbbells from your sides to your shoulders."
+    "description": "Curl dumbbells up with palms facing down, rotate at the top to palms up, and lower slowly. Focuses on brachialis and forearms.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=H2LS_QU2uIE&ab_channel=ArnandoCruzJr"
   },
   {
     "id": 39,
     "name": "Dumbbell Drag Curls",
     "muscleGroup": "biceps",
     "equipment": "dumbbells",
-    "description": "Curl dumbbells while dragging your elbows behind your torso."
+    "description": "Curl dumbbells while dragging your elbows behind your torso.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=5PdEraHkF1A&ab_channel=MyPTHub"
   },
   {
     "id": 40,
@@ -320,14 +331,16 @@
     "name": "Zottman Curls",
     "muscleGroup": "biceps",
     "equipment": "dumbbells",
-    "description": "Curl dumbbells up normally, rotate wrists, and lower with palms down."
+    "description": "Curl dumbbells up normally, rotate wrists, and lower with palms down.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=wrjEdVZrkhk&ab_channel=MarcusFilly"
   },
   {
     "id": 43,
     "name": "Archer Push-ups",
     "muscleGroup": "chest",
     "equipment": "bodyweight",
-    "description": "Perform push-ups by shifting your weight from side to side, extending one arm while bending the other."
+    "description": "Perform push-ups by shifting your weight from side to side, extending one arm while bending the other.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=wJKLatFY-aU&ab_channel=PureGym"
   },
   {
     "id": 44,
