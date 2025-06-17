@@ -29,6 +29,7 @@ export default function HomePage() {
             Your personal workout companion for home fitness. Create custom routines with dumbbells and bodyweight
             exercises, track your progress, and stay motivated on your fitness journey.
           </p>
+          <blockquote>Just you, your body, and two dumbbells.</blockquote>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -123,7 +124,7 @@ export default function HomePage() {
               <div className="text-center">
                 <h3 className="font-semibold mb-2">Get Started</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  To begin creating workouts, you'll need to add some exercises to your database first.
+                  To begin creating workouts, you'll need to add some exercises to your database first. <br /> I included a few (86 for now) but you can add your own or edit existing ones.
                 </p>
                 <Link href="/exercises">
                   <Button>Add Your First Exercises</Button>

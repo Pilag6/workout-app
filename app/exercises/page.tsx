@@ -72,19 +72,25 @@ export default function ExercisesPage() {
   const [newExercise, setNewExercise] = useState<Partial<Exercise>>({});
   const [isAdding, setIsAdding] = useState(false);
   const { toast } = useToast();
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    const sampleExercises = sampleExercisesData as Exercise[];
+    // Map the sample data to match our Exercise interface, converting id from number to string
+    const sampleExercises: Exercise[] = (sampleExercisesData as any[]).map(
+      (exercise) => ({
+        ...exercise,
+        id: String(exercise.id),
+        equipment: exercise.equipment as "dumbbells" | "bodyweight"
+      })
+    );
 
     setExercises(sampleExercises);
-    localStorage.setItem(
-      "workout-exercises",
-      JSON.stringify(sampleExercises)
-    );
+    localStorage.setItem("workout-exercises", JSON.stringify(sampleExercises));
   }, []);
 
   const saveExercises = (newExercises: Exercise[]) => {
@@ -177,14 +183,14 @@ export default function ExercisesPage() {
 
   const updateExercise = () => {
     if (editingExercise) {
-      const updatedExercises = exercises.map(ex =>
+      const updatedExercises = exercises.map((ex) =>
         ex.id === editingExercise.id ? editingExercise : ex
       );
       saveExercises(updatedExercises);
       setEditingExercise(null);
       setIsEditing(false);
       toast({
-        title: 'Exercise updated',
+        title: "Exercise updated",
         description: `${editingExercise.name} has been updated`
       });
     }
@@ -196,8 +202,17 @@ export default function ExercisesPage() {
   };
 
   const resetToDefaults = () => {
-    setExercises(sampleExercisesData as Exercise[]);
-    localStorage.setItem("workout-exercises", JSON.stringify(sampleExercisesData));
+    // Map the sample data to match our Exercise interface, similar to what we do in useEffect
+    const sampleExercises: Exercise[] = (sampleExercisesData as any[]).map(
+      (exercise) => ({
+        ...exercise,
+        id: String(exercise.id),
+        equipment: exercise.equipment as "dumbbells" | "bodyweight"
+      })
+    );
+
+    setExercises(sampleExercises);
+    localStorage.setItem("workout-exercises", JSON.stringify(sampleExercises));
     toast({
       title: "Reset complete",
       description: "Exercises have been reset to default values"
@@ -219,44 +234,21 @@ export default function ExercisesPage() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Upload className="h-5 w-5 mr-2" />
-                  Import/Export
-                </CardTitle>
-                <CardDescription>
-                  Upload a JSON file or export your current exercises
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="file-upload">Upload JSON File</Label>
-                  <Input
-                    id="file-upload"
-                    type="file"
-                    accept=".json"
-                    onChange={handleFileUpload}
-                    className="mt-2"
-                  />
-                </div>
-                <Button
-                  onClick={exportExercises}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Exercises
-                </Button>
-              </CardContent>
-            </Card>
+            <p>
+              There are 86 exercises to get you started — but you can always add
+              more.
+            </p>
 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Plus className="h-5 w-5 mr-2" />
-                  Add Exercise
+                  Add Exercise <span className="ml-1 text-base"> (optional)</span>
                 </CardTitle>
+                <CardDescription>
+                  If you add new exercises, don’t forget to export them so you
+                  can reuse them later.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {!isAdding ? (
@@ -371,6 +363,55 @@ export default function ExercisesPage() {
                 )}
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Upload className="h-5 w-5 mr-2" />
+                  Import/Export <span className="ml-1 text-base"> (optional)</span>
+                </CardTitle>
+                <CardDescription>
+                  Upload a JSON file or export your current exercises list
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="file-upload">Upload JSON File</Label>
+                  <Input
+                    id="file-upload"
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileUpload}
+                    className="mt-2"
+                  />
+                </div>
+                <Button
+                  onClick={exportExercises}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Exercises
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Ready to start a workout?</CardTitle>
+                <CardDescription>
+                  Begin your training session using your created exercises
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/workout">
+                  <Button className="w-full">
+                    <Play className="h-4 w-4 mr-2" />
+                    Start Workout
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="lg:col-span-2">
@@ -385,14 +426,14 @@ export default function ExercisesPage() {
                       All exercises available for your workouts
                     </CardDescription>
                   </div>
-                  <Button
+                  {/* <Button
                     onClick={resetToDefaults}
                     size="sm"
                     className="text-destructive hover:text-destructive"
                   >
                     <RotateCcw className="h-4 w-4 mr-1" />
                     Refresh
-                  </Button>
+                  </Button> */}
                 </div>
               </CardHeader>
               <CardContent>
@@ -421,7 +462,10 @@ export default function ExercisesPage() {
                             {exercise.equipment}
                           </Badge>
                           {exercise.youtubeUrl && (
-                            <Badge variant="outline" className="bg-red-50 text-red-700">
+                            <Badge
+                              variant="outline"
+                              className="bg-red-50 text-red-700"
+                            >
                               📹 Video
                             </Badge>
                           )}
@@ -470,7 +514,10 @@ export default function ExercisesPage() {
         </div>
 
         {isEditing && editingExercise && (
-          <Dialog open={isEditing} onOpenChange={(open) => !open && cancelEdit()}>
+          <Dialog
+            open={isEditing}
+            onOpenChange={(open) => !open && cancelEdit()}
+          >
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Edit Exercise</DialogTitle>
@@ -529,9 +576,7 @@ export default function ExercisesPage() {
                 <Button variant="outline" onClick={cancelEdit}>
                   Cancel
                 </Button>
-                <Button onClick={updateExercise}>
-                  Update Exercise
-                </Button>
+                <Button onClick={updateExercise}>Update Exercise</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
