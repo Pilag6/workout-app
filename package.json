@@ -1,7 +1,15 @@
 {
-  "name": "my-v0-project",
+  "name": "Workout App",
   "version": "0.1.0",
   "private": true,
+  "description": "Workout App",
+  "author": "Mario Gonzalez",
+  "license": "MIT",
+  "homepage": "https://pila-workout.vercel.app/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pilag6/workout-app"
+  },
   "scripts": {
     "dev": "next dev -p 1944",
     "build": "next build",
