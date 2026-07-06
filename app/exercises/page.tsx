@@ -1,593 +1,480 @@
-"use client";
+"use client"
 
-import type React from "react";
-
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+import type React from "react"
+import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import {
   Upload,
   Download,
   Plus,
   Trash2,
-  ArrowLeft,
   Dumbbell,
   User,
+  Search,
+  Video,
+  Pencil,
+  RotateCcw,
   Play,
-  ExternalLink,
-  RotateCcw
-} from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import ExerciseModal from "@/components/ExerciseModal";
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog";
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { PageContainer } from "@/components/page-container"
+import { EmptyState } from "@/components/empty-state"
+import ExerciseModal from "@/components/ExerciseModal"
+import { useToast } from "@/hooks/use-toast"
+import {
+  getExercises,
+  saveExercises,
+  resetExercisesToDefaults,
+  MUSCLE_GROUPS,
+  type Exercise,
+  type Equipment,
+} from "@/lib/workout-store"
 
-import sampleExercisesData from "@/data/sampleExercises.json";
+const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
 
-interface Exercise {
-  id: string;
-  name: string;
-  muscleGroup: string;
-  equipment: "dumbbells" | "bodyweight";
-  description?: string;
-  youtubeUrl?: string;
-}
-
-const muscleGroups = [
-  "chest",
-  "back",
-  "shoulders",
-  "biceps",
-  "triceps",
-  "legs",
-  "abs"
-];
+const emptyForm: Partial<Exercise> = {}
 
 export default function ExercisesPage() {
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [newExercise, setNewExercise] = useState<Partial<Exercise>>({});
-  const [isAdding, setIsAdding] = useState(false);
-  const { toast } = useToast();
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(
-    null
-  );
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [exercises, setExercises] = useState<Exercise[]>([])
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const [searchTerm, setSearchTerm] = useState("")
+  const [muscleFilter, setMuscleFilter] = useState<string>("all")
+  const [equipmentFilter, setEquipmentFilter] = useState<string>("all")
+
+  const [formOpen, setFormOpen] = useState(false)
+  const [form, setForm] = useState<Partial<Exercise>>(emptyForm)
+  const [editingId, setEditingId] = useState<string | null>(null)
+
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Map the sample data to match our Exercise interface, converting id from number to string
-    const sampleExercises: Exercise[] = (sampleExercisesData as any[]).map(
-      (exercise) => ({
-        ...exercise,
-        id: String(exercise.id),
-        equipment: exercise.equipment as "dumbbells" | "bodyweight"
+    setExercises(getExercises())
+  }, [])
+
+  const persist = (next: Exercise[]) => {
+    setExercises(next)
+    saveExercises(next)
+  }
+
+  const filtered = useMemo(
+    () =>
+      exercises.filter((ex) => {
+        const matchesSearch = ex.name.toLowerCase().includes(searchTerm.toLowerCase())
+        const matchesMuscle = muscleFilter === "all" || ex.muscleGroup === muscleFilter
+        const matchesEquipment = equipmentFilter === "all" || ex.equipment === equipmentFilter
+        return matchesSearch && matchesMuscle && matchesEquipment
+      }),
+    [exercises, searchTerm, muscleFilter, equipmentFilter],
+  )
+
+  const openAdd = () => {
+    setEditingId(null)
+    setForm(emptyForm)
+    setFormOpen(true)
+  }
+
+  const openEdit = (exercise: Exercise) => {
+    setEditingId(exercise.id)
+    setForm(exercise)
+    setFormOpen(true)
+  }
+
+  const saveForm = () => {
+    if (!form.name || !form.muscleGroup || !form.equipment) {
+      toast({
+        title: "Missing details",
+        description: "Name, muscle group and equipment are required",
+        variant: "destructive",
       })
-    );
-
-    setExercises(sampleExercises);
-    localStorage.setItem("workout-exercises", JSON.stringify(sampleExercises));
-  }, []);
-
-  const saveExercises = (newExercises: Exercise[]) => {
-    setExercises(newExercises);
-    localStorage.setItem("workout-exercises", JSON.stringify(newExercises));
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = JSON.parse(e.target?.result as string);
-          if (Array.isArray(data)) {
-            const validExercises = data.filter(
-              (ex) => ex.name && ex.muscleGroup && ex.equipment
-            );
-            saveExercises(validExercises);
-            toast({
-              title: "Exercises imported",
-              description: `Successfully imported ${validExercises.length} exercises`
-            });
-          }
-        } catch (error) {
-          toast({
-            title: "Import failed",
-            description: "Invalid JSON file format",
-            variant: "destructive"
-          });
-        }
-      };
-      reader.readAsText(file);
+      return
     }
-  };
-
-  const exportExercises = () => {
-    const dataStr = JSON.stringify(exercises, null, 2);
-    const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "workout-exercises.json";
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const addExercise = () => {
-    if (newExercise.name && newExercise.muscleGroup && newExercise.equipment) {
+    if (editingId) {
+      persist(exercises.map((ex) => (ex.id === editingId ? ({ ...ex, ...form } as Exercise) : ex)))
+      toast({ title: "Exercise updated", description: `${form.name} was updated` })
+    } else {
       const exercise: Exercise = {
         id: Date.now().toString(),
-        name: newExercise.name,
-        muscleGroup: newExercise.muscleGroup,
-        equipment: newExercise.equipment,
-        description: newExercise.description || "",
-        youtubeUrl: newExercise.youtubeUrl || undefined
-      };
-      saveExercises([...exercises, exercise]);
-      setNewExercise({});
-      setIsAdding(false);
-      toast({
-        title: "Exercise added",
-        description: `${exercise.name} has been added to your database`
-      });
+        name: form.name,
+        muscleGroup: form.muscleGroup,
+        equipment: form.equipment,
+        description: form.description || "",
+        youtubeUrl: form.youtubeUrl || undefined,
+      }
+      persist([...exercises, exercise])
+      toast({ title: "Exercise added", description: `${exercise.name} added to your library` })
     }
-  };
+    setFormOpen(false)
+    setForm(emptyForm)
+    setEditingId(null)
+  }
 
   const deleteExercise = (id: string) => {
-    saveExercises(exercises.filter((ex) => ex.id !== id));
-    toast({
-      title: "Exercise deleted",
-      description: "Exercise has been removed from your database"
-    });
-  };
+    persist(exercises.filter((ex) => ex.id !== id))
+    toast({ title: "Exercise removed" })
+  }
 
-  const openExerciseModal = (exercise: Exercise) => {
-    setSelectedExercise(exercise);
-    setIsModalOpen(true);
-  };
-
-  const closeExerciseModal = () => {
-    setSelectedExercise(null);
-    setIsModalOpen(false);
-  };
-
-  const startEditExercise = (exercise: Exercise) => {
-    setEditingExercise(exercise);
-    setIsEditing(true);
-  };
-
-  const updateExercise = () => {
-    if (editingExercise) {
-      const updatedExercises = exercises.map((ex) =>
-        ex.id === editingExercise.id ? editingExercise : ex
-      );
-      saveExercises(updatedExercises);
-      setEditingExercise(null);
-      setIsEditing(false);
-      toast({
-        title: "Exercise updated",
-        description: `${editingExercise.name} has been updated`
-      });
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string)
+        if (Array.isArray(data)) {
+          const valid = data.filter((ex) => ex.name && ex.muscleGroup && ex.equipment)
+          persist(valid)
+          toast({ title: "Library imported", description: `Imported ${valid.length} exercises` })
+        }
+      } catch {
+        toast({ title: "Import failed", description: "Invalid JSON file", variant: "destructive" })
+      }
     }
-  };
+    reader.readAsText(file)
+    event.target.value = ""
+  }
 
-  const cancelEdit = () => {
-    setEditingExercise(null);
-    setIsEditing(false);
-  };
+  const exportExercises = () => {
+    const dataBlob = new Blob([JSON.stringify(exercises, null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = "workout-exercises.json"
+    link.click()
+    URL.revokeObjectURL(url)
+  }
 
   const resetToDefaults = () => {
-    // Map the sample data to match our Exercise interface, similar to what we do in useEffect
-    const sampleExercises: Exercise[] = (sampleExercisesData as any[]).map(
-      (exercise) => ({
-        ...exercise,
-        id: String(exercise.id),
-        equipment: exercise.equipment as "dumbbells" | "bodyweight"
-      })
-    );
+    setExercises(resetExercisesToDefaults())
+    toast({ title: "Library reset", description: "Restored the default exercises" })
+  }
 
-    setExercises(sampleExercises);
-    localStorage.setItem("workout-exercises", JSON.stringify(sampleExercises));
-    toast({
-      title: "Reset complete",
-      description: "Exercises have been reset to default values"
-    });
-  };
+  const hasActiveFilters = searchTerm !== "" || muscleFilter !== "all" || equipmentFilter !== "all"
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="flex items-center mb-8">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="mr-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold">Manage Exercises</h1>
+    <PageContainer size="wide">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow mb-2">Exercise library</p>
+          <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Library</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {exercises.length} exercises for dumbbells and bodyweight training.
+          </p>
         </div>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-6">
-            <p>
-              There are 86 exercises to get you started — but you can always add
-              more.
-            </p>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Add Exercise <span className="ml-1 text-base"> (optional)</span>
-                </CardTitle>
-                <CardDescription>
-                  If you add new exercises, don’t forget to export them so you
-                  can reuse them later.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {!isAdding ? (
-                  <Button onClick={() => setIsAdding(true)} className="w-full">
-                    Add New Exercise
-                  </Button>
-                ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Exercise Name</Label>
-                      <Input
-                        id="name"
-                        value={newExercise.name || ""}
-                        onChange={(e) =>
-                          setNewExercise({
-                            ...newExercise,
-                            name: e.target.value
-                          })
-                        }
-                        placeholder="e.g., Push-ups"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="muscle-group">Muscle Group</Label>
-                      <Select
-                        value={newExercise.muscleGroup || ""}
-                        onValueChange={(value) =>
-                          setNewExercise({ ...newExercise, muscleGroup: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select muscle group" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {muscleGroups.map((group) => (
-                            <SelectItem key={group} value={group}>
-                              {group.charAt(0).toUpperCase() + group.slice(1)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="equipment">Equipment</Label>
-                      <Select
-                        value={newExercise.equipment || ""}
-                        onValueChange={(value: "dumbbells" | "bodyweight") =>
-                          setNewExercise({ ...newExercise, equipment: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select equipment" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="bodyweight">Bodyweight</SelectItem>
-                          <SelectItem value="dumbbells">Dumbbells</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="description">
-                        Description (Optional)
-                      </Label>
-                      <Textarea
-                        id="description"
-                        value={newExercise.description || ""}
-                        onChange={(e) =>
-                          setNewExercise({
-                            ...newExercise,
-                            description: e.target.value
-                          })
-                        }
-                        placeholder="Brief description or instructions"
-                        rows={3}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="youtube-url">
-                        YouTube Video URL (Optional)
-                      </Label>
-                      <Input
-                        id="youtube-url"
-                        value={newExercise.youtubeUrl || ""}
-                        onChange={(e) =>
-                          setNewExercise({
-                            ...newExercise,
-                            youtubeUrl: e.target.value
-                          })
-                        }
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        type="url"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Paste a YouTube video URL to show exercise demonstration
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={addExercise} className="flex-1">
-                        Add
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setIsAdding(false);
-                          setNewExercise({});
-                        }}
-                        variant="outline"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Upload className="h-5 w-5 mr-2" />
-                  Import/Export <span className="ml-1 text-base"> (optional)</span>
-                </CardTitle>
-                <CardDescription>
-                  Upload a JSON file or export your current exercises list
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="file-upload">Upload JSON File</Label>
-                  <Input
-                    id="file-upload"
-                    type="file"
-                    accept=".json"
-                    onChange={handleFileUpload}
-                    className="mt-2"
-                  />
-                </div>
-                <Button
-                  onClick={exportExercises}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Exercises
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Ready to start a workout?</CardTitle>
-                <CardDescription>
-                  Begin your training session using your created exercises
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/workout">
-                  <Button className="w-full">
-                    <Play className="h-4 w-4 mr-2" />
-                    Start Workout
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>
-                      Your Exercise Database ({exercises.length} exercises)
-                    </CardTitle>
-                    <CardDescription>
-                      All exercises available for your workouts
-                    </CardDescription>
-                  </div>
-                  {/* <Button
-                    onClick={resetToDefaults}
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <RotateCcw className="h-4 w-4 mr-1" />
-                    Refresh
-                  </Button> */}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-                  {exercises.map((exercise) => (
-                    <div
-                      key={exercise.id}
-                      className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
-                      onClick={() => openExerciseModal(exercise)}
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold">{exercise.name}</h3>
-                          <Badge variant="secondary">
-                            {exercise.muscleGroup}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="flex items-center gap-1"
-                          >
-                            {exercise.equipment === "dumbbells" ? (
-                              <Dumbbell className="h-3 w-3" />
-                            ) : (
-                              <User className="h-3 w-3" />
-                            )}
-                            {exercise.equipment}
-                          </Badge>
-                          {exercise.youtubeUrl && (
-                            <Badge
-                              variant="outline"
-                              className="bg-red-50 text-red-700"
-                            >
-                              📹 Video
-                            </Badge>
-                          )}
-                        </div>
-                        {exercise.description && (
-                          <p className="text-sm text-muted-foreground">
-                            {exercise.description}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startEditExercise(exercise);
-                          }}
-                          className="text-primary hover:text-primary"
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteExercise(exercise.id);
-                          }}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  {exercises.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No exercises found. Add some exercises to get started!
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <input id="file-upload" type="file" accept=".json" onChange={handleFileUpload} className="hidden" />
+          <Button asChild variant="ghost" size="sm">
+            <label htmlFor="file-upload" className="cursor-pointer">
+              <Upload className="h-4 w-4" />
+              Import
+            </label>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={exportExercises}>
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+          <Button variant="brand" size="sm" onClick={openAdd}>
+            <Plus className="h-4 w-4" />
+            Add exercise
+          </Button>
         </div>
-
-        {isEditing && editingExercise && (
-          <Dialog
-            open={isEditing}
-            onOpenChange={(open) => !open && cancelEdit()}
-          >
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Edit Exercise</DialogTitle>
-                <DialogDescription>
-                  Update the exercise details and YouTube video URL
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="edit-name">Exercise Name</Label>
-                  <Input
-                    id="edit-name"
-                    value={editingExercise.name}
-                    onChange={(e) =>
-                      setEditingExercise({
-                        ...editingExercise,
-                        name: e.target.value
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit-description">Description</Label>
-                  <Textarea
-                    id="edit-description"
-                    value={editingExercise.description || ""}
-                    onChange={(e) =>
-                      setEditingExercise({
-                        ...editingExercise,
-                        description: e.target.value
-                      })
-                    }
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit-youtube">YouTube Video URL</Label>
-                  <Input
-                    id="edit-youtube"
-                    value={editingExercise.youtubeUrl || ""}
-                    onChange={(e) =>
-                      setEditingExercise({
-                        ...editingExercise,
-                        youtubeUrl: e.target.value
-                      })
-                    }
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    type="url"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Paste a YouTube video URL to show exercise demonstration
-                  </p>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={cancelEdit}>
-                  Cancel
-                </Button>
-                <Button onClick={updateExercise}>Update Exercise</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
-
-        <ExerciseModal
-          exercise={selectedExercise}
-          isOpen={isModalOpen}
-          onClose={closeExerciseModal}
-        />
       </div>
-    </div>
-  );
+
+      <div className="mb-5 flex flex-col gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search exercises"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-11 pl-9"
+              aria-label="Search exercises"
+            />
+          </div>
+          <div className="inline-flex shrink-0 rounded-lg border border-border bg-secondary/50 p-0.5">
+            {[
+              { value: "all", label: "All" },
+              { value: "dumbbells", label: "Dumbbells" },
+              { value: "bodyweight", label: "Bodyweight" },
+            ].map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setEquipmentFilter(option.value)}
+                aria-pressed={equipmentFilter === option.value}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  equipmentFilter === option.value
+                    ? "bg-card text-foreground shadow-soft"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <FilterChip active={muscleFilter === "all"} onClick={() => setMuscleFilter("all")}>
+            All muscles
+          </FilterChip>
+          {MUSCLE_GROUPS.map((group) => (
+            <FilterChip key={group} active={muscleFilter === group} onClick={() => setMuscleFilter(group)}>
+              {capitalize(group)}
+            </FilterChip>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-3 flex items-center justify-between px-0.5">
+        <span className="text-xs text-muted-foreground">
+          {filtered.length} of {exercises.length}
+        </span>
+        {hasActiveFilters ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-muted-foreground"
+            onClick={() => {
+              setSearchTerm("")
+              setMuscleFilter("all")
+              setEquipmentFilter("all")
+            }}
+          >
+            Clear filters
+          </Button>
+        ) : null}
+      </div>
+
+      {filtered.length > 0 ? (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {filtered.map((exercise) => (
+            <div
+              key={exercise.id}
+              className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 shadow-soft transition-colors hover:border-muted-foreground/30"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedExercise(exercise)
+                  setIsModalOpen(true)
+                }}
+                className="min-w-0 flex-1 text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="truncate text-sm font-medium">{exercise.name}</span>
+                  {exercise.youtubeUrl ? <Video className="h-3.5 w-3.5 shrink-0 text-brand" /> : null}
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="capitalize">{exercise.muscleGroup}</span>
+                  <span aria-hidden>·</span>
+                  <span className="inline-flex items-center gap-1">
+                    {exercise.equipment === "dumbbells" ? (
+                      <Dumbbell className="h-3 w-3" />
+                    ) : (
+                      <User className="h-3 w-3" />
+                    )}
+                    {exercise.equipment}
+                  </span>
+                </div>
+              </button>
+              <div className="flex shrink-0 items-center">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => openEdit(exercise)}
+                  aria-label={`Edit ${exercise.name}`}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => deleteExercise(exercise.id)}
+                  className="text-muted-foreground hover:text-destructive"
+                  aria-label={`Delete ${exercise.name}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={<Search />}
+          title="No exercises found"
+          description="Try a different search, clear filters, or add a new exercise."
+          action={
+            <Button variant="brand" onClick={openAdd}>
+              <Plus className="h-4 w-4" />
+              Add exercise
+            </Button>
+          }
+        />
+      )}
+
+      <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-xl border border-border bg-card p-5 shadow-soft sm:flex-row">
+        <div>
+          <h3 className="font-display text-base font-semibold tracking-tight">Ready to train?</h3>
+          <p className="text-sm text-muted-foreground">Build a routine from your library and start a session.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={resetToDefaults} className="text-muted-foreground">
+            <RotateCcw className="h-4 w-4" />
+            Reset defaults
+          </Button>
+          <Button asChild variant="brand">
+            <Link href="/workout">
+              <Play className="h-4 w-4" />
+              Build routine
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* Add / edit dialog */}
+      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Edit exercise" : "Add exercise"}</DialogTitle>
+            <DialogDescription>
+              {editingId
+                ? "Update the details for this exercise."
+                : "Add a custom exercise to your library. Export afterwards to keep a backup."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="ex-name">Name</Label>
+              <Input
+                id="ex-name"
+                value={form.name || ""}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="e.g. Push-ups"
+                className="mt-1.5"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="ex-muscle">Muscle group</Label>
+                <Select
+                  value={form.muscleGroup || ""}
+                  onValueChange={(value) => setForm({ ...form, muscleGroup: value })}
+                >
+                  <SelectTrigger id="ex-muscle" className="mt-1.5">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MUSCLE_GROUPS.map((group) => (
+                      <SelectItem key={group} value={group}>
+                        {capitalize(group)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="ex-equipment">Equipment</Label>
+                <Select
+                  value={form.equipment || ""}
+                  onValueChange={(value: Equipment) => setForm({ ...form, equipment: value })}
+                >
+                  <SelectTrigger id="ex-equipment" className="mt-1.5">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bodyweight">Bodyweight</SelectItem>
+                    <SelectItem value="dumbbells">Dumbbells</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="ex-desc">Description</Label>
+              <Textarea
+                id="ex-desc"
+                value={form.description || ""}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                placeholder="Brief cues or instructions"
+                rows={3}
+                className="mt-1.5"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ex-video">YouTube URL (optional)</Label>
+              <Input
+                id="ex-video"
+                type="url"
+                value={form.youtubeUrl || ""}
+                onChange={(e) => setForm({ ...form, youtubeUrl: e.target.value })}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className="mt-1.5"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFormOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="brand" onClick={saveForm}>
+              {editingId ? "Save changes" : "Add exercise"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ExerciseModal
+        exercise={selectedExercise}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setSelectedExercise(null)
+          setIsModalOpen(false)
+        }}
+      />
+    </PageContainer>
+  )
 }
+
+const FilterChip = ({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-pressed={active}
+    className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+      active
+        ? "border-brand/50 bg-brand/10 text-brand"
+        : "border-border text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground"
+    }`}
+  >
+    {children}
+  </button>
+)
