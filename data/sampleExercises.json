@@ -347,7 +347,8 @@
     "name": "Bench Press",
     "muscleGroup": "chest",
     "equipment": "dumbbells",
-    "description": "Lie on a flat surface and press dumbbells upward from your chest."
+    "description": "Lie on a flat surface and press dumbbells upward from your chest.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=YQ2s_Y7g5Qk&pp=ygUUYmVuY2ggcHJlc3MgZHVtYmJlbGw%3Dr"
   },
   {
     "id": 45,
@@ -362,28 +363,24 @@
     "name": "Decline Dumbbell Press",
     "muscleGroup": "chest",
     "equipment": "dumbbells",
-    "description": "Lie on a decline bench and press dumbbells upward from your lower chest."
-  },
-  {
-    "id": 47,
-    "name": "Dumbbell Bench Press",
-    "muscleGroup": "chest",
-    "equipment": "dumbbells",
-    "description": "Lie down and press dumbbells from chest level to above your shoulders."
+    "description": "Lie on a decline bench and press dumbbells upward from your lower chest.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=4R_GwRhG0rY&pp=ygUfRGVjbGluZSBEdW1iYmVsbCBQcmVzcyBkdW1iYmVsbA%3D%3D"
   },
   {
     "id": 48,
     "name": "Dumbbell Flyes",
     "muscleGroup": "chest",
     "equipment": "dumbbells",
-    "description": "With arms extended, lower dumbbells out to the sides and bring them back up."
+    "description": "With arms extended, lower dumbbells out to the sides and bring them back up.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=bgC53-J-6gA&pp=ygUUZHVtYmJlbGwgZmx5ZXMgY2hlc3Q%3D"
   },
   {
     "id": 49,
     "name": "Explosive Push-ups",
     "muscleGroup": "chest",
     "equipment": "bodyweight",
-    "description": "Push up forcefully enough to lift your hands off the ground, then land softly and repeat."
+    "description": "Push up forcefully enough to lift your hands off the ground, then land softly and repeat.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=itOrLQqCiKM&pp=ygUSRXhwbG9zaXZlIFB1c2gtdXBz"
   },
   {
     "id": 50,
@@ -398,14 +395,16 @@
     "name": "Incline Dumbbell Press",
     "muscleGroup": "chest",
     "equipment": "dumbbells",
-    "description": "Lie on an incline bench and press dumbbells from chest level to above your shoulders."
+    "description": "Lie on an incline bench and press dumbbells from chest level to above your shoulders.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=6tW4LUaOxlE&pp=ygUkaW5jbGluZSBkdW1iYmVsbCBwcmVzcyBjaGVzdCB3b3Jrb3V0"
   },
   {
     "id": 52,
     "name": "Push-up to Dumbbell Row",
     "muscleGroup": "chest",
     "equipment": "dumbbells",
-    "description": "Do a push-up holding dumbbells, then row one dumbbell at a time to your waist after each push-up."
+    "description": "Do a push-up holding dumbbells, then row one dumbbell at a time to your waist after each push-up.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=36ZeKaH3Otg&pp=ygUdcHVzaC11cCB0byBkdW1iYmVsbCByb3cgY29tYm8%3D"
   },
   {
     "id": 53,
@@ -420,70 +419,64 @@
     "name": "Wide Push-ups",
     "muscleGroup": "chest",
     "equipment": "bodyweight",
-    "description": "Do push-ups with your hands placed wider than shoulder-width to target the chest more."
+    "description": "Do push-ups with your hands placed wider than shoulder-width to target the chest more.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=m3FTgWtJsFE&pp=ygUNV2lkZSBQdXNoLXVwcw%3D%3D"
   },
   {
     "id": 55,
     "name": "Deadlifts",
     "muscleGroup": "legs",
     "equipment": "dumbbells",
-    "description": "Lower dumbbells while keeping legs slightly bent and back straight."
+    "description": "Lower dumbbells while keeping legs slightly bent and back straight.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=plb5jEO4Unw&pp=ygUTZGVhZGxpZnRzIGR1bWJiZWxscw%3D%3D"
   },
   {
     "id": 56,
     "name": "Dumbbell Lunges",
     "muscleGroup": "legs",
     "equipment": "dumbbells",
-    "description": "Step forward into a lunge position while holding dumbbells."
+    "description": "Step forward into a lunge position while holding dumbbells.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=9gglI77Kzq8&pp=ygUPRHVtYmJlbGwgTHVuZ2Vz0gcJCUwLAYcqIYzv"
   },
   {
     "id": 57,
     "name": "Dumbbell Squats",
     "muscleGroup": "legs",
     "equipment": "dumbbells",
-    "description": "Hold dumbbells and squat down until thighs are parallel to the ground."
-  },
-  {
-    "id": 58,
-    "name": "Hyperextensions",
-    "muscleGroup": "legs",
-    "equipment": "bodyweight",
-    "description": "Bend forward at the waist and lift your torso back to alignment."
-  },
-  {
-    "id": 59,
-    "name": "Leg Extensions",
-    "muscleGroup": "legs",
-    "equipment": "bodyweight",
-    "description": "Straighten your knee from a seated position using your legs."
+    "description": "Hold dumbbells and squat down until thighs are parallel to the ground.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=vBA3vyOxJv0&pp=ygUPRHVtYmJlbGwgU3F1YXRz"
   },
   {
     "id": 60,
     "name": "Lunges",
     "muscleGroup": "legs",
     "equipment": "bodyweight",
-    "description": "Step forward and bend both knees to 90 degrees, then return."
+    "description": "Step forward and bend both knees to 90 degrees, then return.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=xrPteyQLGAo&pp=ygUGTHVuZ2Vz"
   },
   {
     "id": 61,
     "name": "Squats",
     "muscleGroup": "legs",
     "equipment": "bodyweight",
-    "description": "Lower your hips from a standing position and rise back up."
+    "description": "Lower your hips from a standing position and rise back up.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=xqvCmoLULNY&pp=ygUGU3F1YXRz"
   },
   {
     "id": 62,
     "name": "Arnold Press",
     "muscleGroup": "shoulders",
     "equipment": "dumbbells",
-    "description": "Rotate dumbbells from front to overhead press position."
+    "description": "Rotate dumbbells from front to overhead press position.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=pQDrcNoDNVM&pp=ygUMQXJub2xkIFByZXNz"
   },
   {
     "id": 63,
     "name": "DB Bent-Over Lateral Raise",
     "muscleGroup": "shoulders",
     "equipment": "dumbbells",
-    "description": "Bend forward and raise dumbbells out to the sides to target rear delts."
+    "description": "Bend forward and raise dumbbells out to the sides to target rear delts.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=1ukIlEyMbXw&pp=ygUaREIgQmVudC1PdmVyIExhdGVyYWwgUmFpc2U%3D"
   },
   {
     "id": 64,
@@ -498,28 +491,32 @@
     "name": "DB Front Raises",
     "muscleGroup": "shoulders",
     "equipment": "dumbbells",
-    "description": "Lift dumbbells forward until they reach shoulder height."
+    "description": "Lift dumbbells forward until they reach shoulder height.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=xagEKj2yDc8&pp=ygUPREIgRnJvbnQgUmFpc2Vz"
   },
   {
     "id": 66,
     "name": "DB Lateral Raises",
     "muscleGroup": "shoulders",
     "equipment": "dumbbells",
-    "description": "Lift dumbbells out to the sides up to shoulder height."
+    "description": "Lift dumbbells out to the sides up to shoulder height.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=XPPfnSEATJA&pp=ygURREIgTGF0ZXJhbCBSYWlzZXM%3D"
   },
   {
     "id": 67,
     "name": "DB Over Head Press",
     "muscleGroup": "shoulders",
     "equipment": "dumbbells",
-    "description": "Press dumbbells vertically overhead from shoulder level."
+    "description": "Press dumbbells vertically overhead from shoulder level.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=Did01dFR3Lk&pp=ygUSREIgT3ZlciBIZWFkIFByZXNz"
   },
   {
     "id": 68,
     "name": "DB Rear Delt Rows",
     "muscleGroup": "shoulders",
     "equipment": "dumbbells",
-    "description": "Bend forward and row dumbbells outward to target rear delts."
+    "description": "Bend forward and row dumbbells outward to target rear delts.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=hOlO2wO-6dk&pp=ygURREIgUmVhciBEZWx0IFJvd3M%3D"
   },
   {
     "id": 69,
