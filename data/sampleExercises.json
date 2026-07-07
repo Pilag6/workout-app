@@ -644,5 +644,13 @@
     "muscleGroup": "triceps",
     "equipment": "dumbbells",
     "description": "Extend your arm back from a bent-over position to contract triceps."
+  },
+  {
+    "id": 87,
+    "name": "Glute Bridge with Dumbbells",
+    "muscleGroup": "legs",
+    "equipment": "dumbbells",
+    "description": "Lie on your back with dumbbells at your sides, lift your hips up to a bridge position, then lower back down.",
+    "youtubeUrl": "https://www.youtube.com/watch?v=cruqsnAyU6A&pp=ygUPYnJpZGdlIGR1bWJiZWxs"
   }
 ]
