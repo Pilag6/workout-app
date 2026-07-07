@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageContainer } from "@/components/page-container"
 import { EmptyState } from "@/components/empty-state"
 import ExerciseModal from "@/components/ExerciseModal"
+import { RoutineNameDialog } from "@/components/routine-name-dialog"
 import {
   ArrowLeft,
   Shuffle,
@@ -35,7 +36,9 @@ import { useToast } from "@/hooks/use-toast"
 import {
   getExercises,
   getSettings,
+  createSavedRoutine,
   setCurrentWorkout,
+  upsertSavedRoutine,
   MUSCLE_GROUPS,
   type Exercise,
   type WorkoutExercise,
@@ -50,6 +53,7 @@ export default function WorkoutPage() {
   const [exercisesPerGroup, setExercisesPerGroup] = useState(3)
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedMuscleFilter, setSelectedMuscleFilter] = useState<string>("all")
@@ -262,6 +266,19 @@ export default function WorkoutPage() {
     }
     setCurrentWorkout(generatedWorkout)
     router.push("/routine")
+  }
+
+  const saveRoutine = () => {
+    if (generatedWorkout.length === 0) {
+      toast({ title: "Empty routine", description: "Add exercises before saving", variant: "destructive" })
+      return
+    }
+    setSaveDialogOpen(true)
+  }
+
+  const confirmSaveRoutine = (name: string) => {
+    upsertSavedRoutine(createSavedRoutine(name, generatedWorkout))
+    toast({ title: "Routine saved", description: `${name} is available in My Routines` })
   }
 
   const updateExercise = (index: number, field: "sets" | "reps", value: number) => {
@@ -643,10 +660,15 @@ export default function WorkoutPage() {
 
             {generatedWorkout.length > 0 ? (
               <div className="sticky bottom-0 rounded-b-2xl border-t border-border bg-card/95 p-4 backdrop-blur sm:p-5">
-                <Button onClick={startWorkout} variant="brand" size="lg" className="w-full">
-                  <Play className="h-4 w-4" />
-                  Start workout
-                </Button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button onClick={saveRoutine} variant="outline" size="lg" className="sm:w-44">
+                    Save routine
+                  </Button>
+                  <Button onClick={startWorkout} variant="brand" size="lg" className="flex-1">
+                    <Play className="h-4 w-4" />
+                    Start workout
+                  </Button>
+                </div>
               </div>
             ) : null}
           </div>
@@ -654,6 +676,15 @@ export default function WorkoutPage() {
       </div>
 
       <ExerciseModal exercise={selectedExercise} isOpen={isModalOpen} onClose={closeExerciseModal} />
+      <RoutineNameDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        title="Save this routine"
+        description="Give this workout a name so you can start it again from My Routines."
+        initialName={`Routine ${new Date().toLocaleDateString()}`}
+        submitLabel="Save routine"
+        onSubmit={confirmSaveRoutine}
+      />
     </PageContainer>
   )
 }

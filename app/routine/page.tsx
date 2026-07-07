@@ -1,8 +1,17 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { ProgressRing } from "@/components/ui/progress-ring"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import ExerciseModal from "@/components/ExerciseModal"
 import {
   X,
@@ -16,54 +25,86 @@ import {
   Plus,
   Flag,
   Timer,
+  Video,
+  Search,
+  GripVertical,
+  Pause,
+  Play,
 } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import type React from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import {
   appendHistory,
   clearCurrentWorkout,
-  getCurrentWorkout,
+  getExercises,
+  getCurrentWorkoutSession,
   getSettings,
-  setCurrentWorkout,
+  markRoutineCompleted,
+  setCurrentWorkoutSession,
   setLastSummary,
+  type ActiveRestState,
+  type ActiveWorkoutSession,
+  type Exercise,
+  type ExerciseProgress,
   type WorkoutExercise,
 } from "@/lib/workout-store"
 
-interface ExerciseProgress {
-  exerciseId: string
-  completedSets: number
-  isCompleted: boolean
-}
+const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
 
 export default function RoutinePage() {
   const [workout, setWorkout] = useState<WorkoutExercise[]>([])
   const [progress, setProgress] = useState<ExerciseProgress[]>([])
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
-  const [restTimer, setRestTimer] = useState(0)
-  const [isResting, setIsResting] = useState(false)
+  const [rest, setRest] = useState<ActiveRestState | null>(null)
+  const [restRemaining, setRestRemaining] = useState(0)
   const [restDuration, setRestDuration] = useState(60)
   const [workoutStartTime, setWorkoutStartTime] = useState<Date | null>(null)
   const [elapsed, setElapsed] = useState(0)
   const [selectedExercise, setSelectedExercise] = useState<WorkoutExercise | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [library, setLibrary] = useState<Exercise[]>([])
+  const [addOpen, setAddOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const router = useRouter()
   const { toast } = useToast()
 
   useEffect(() => {
-    const workoutData = getCurrentWorkout()
-    if (workoutData.length > 0) {
-      setWorkout(workoutData)
-      setProgress(
-        workoutData.map((ex) => ({ exerciseId: ex.id, completedSets: 0, isCompleted: false })),
-      )
-      setWorkoutStartTime(new Date())
+    const session = getCurrentWorkoutSession()
+    if (session && session.workout.length > 0) {
+      setWorkout(session.workout)
+      setProgress(session.progress)
+      setCurrentExerciseIndex(session.currentExerciseIndex)
+      setWorkoutStartTime(new Date(session.startedAt))
+      setRest(session.rest)
       setRestDuration(getSettings().restSeconds)
+      setLibrary(getExercises())
     } else {
       router.push("/workout")
     }
   }, [router])
+
+  const persistSession = (
+    nextWorkout = workout,
+    nextProgress = progress,
+    nextIndex = currentExerciseIndex,
+    nextRest = rest,
+  ) => {
+    if (nextWorkout.length === 0) return
+    const session: ActiveWorkoutSession = {
+      version: 1,
+      workout: nextWorkout,
+      progress: nextProgress,
+      currentExerciseIndex: nextIndex,
+      startedAt: (workoutStartTime || new Date()).toISOString(),
+      rest: nextRest,
+    }
+    setCurrentWorkoutSession(session)
+  }
 
   useEffect(() => {
     if (!workoutStartTime) return
@@ -74,29 +115,31 @@ export default function RoutinePage() {
   }, [workoutStartTime])
 
   useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (isResting && restTimer > 0) {
-      interval = setInterval(() => {
-        setRestTimer((prev) => {
-          if (prev <= 1) {
-            setIsResting(false)
-            toast({ title: "Rest complete", description: "Ready for your next set" })
-            return 0
-          }
-          return prev - 1
-        })
-      }, 1000)
+    if (!rest) {
+      setRestRemaining(0)
+      return
     }
+
+    const syncRest = () => {
+      const remaining = rest.isPaused || !rest.deadline ? rest.remainingSeconds : Math.max(0, Math.ceil((rest.deadline - Date.now()) / 1000))
+      setRestRemaining(remaining)
+      if (!rest.isPaused && rest.deadline && remaining <= 0) {
+        setRest(null)
+        setCurrentExerciseIndex(rest.nextExerciseIndex)
+        persistSession(workout, progress, rest.nextExerciseIndex, null)
+        toast({ title: "Rest complete", description: "Next exercise is ready" })
+      }
+    }
+
+    syncRest()
+    const interval = setInterval(syncRest, 500)
     return () => clearInterval(interval)
-  }, [isResting, restTimer, toast])
+  }, [rest, workout, progress, toast])
 
   const completeSet = (exerciseIndex: number) => {
     if (exerciseIndex !== currentExerciseIndex) {
       setCurrentExerciseIndex(exerciseIndex)
-      if (isResting) {
-        setIsResting(false)
-        setRestTimer(0)
-      }
+      setRest(null)
     }
 
     const exercise = workout[exerciseIndex]
@@ -106,20 +149,36 @@ export default function RoutinePage() {
       const newCompletedSets = currentProgress.completedSets + 1
       const isExerciseCompleted = newCompletedSets >= exercise.sets
 
-      setProgress((prev) =>
-        prev.map((p, i) =>
-          i === exerciseIndex ? { ...p, completedSets: newCompletedSets, isCompleted: isExerciseCompleted } : p,
-        ),
+      const nextProgress = progress.map((p, i) =>
+        i === exerciseIndex ? { ...p, completedSets: newCompletedSets, isCompleted: isExerciseCompleted } : p,
       )
+      setProgress(nextProgress)
 
       if (isExerciseCompleted) {
         toast({ title: "Exercise complete", description: `Nice work on ${exercise.name}` })
         if (exerciseIndex < workout.length - 1) {
-          setCurrentExerciseIndex(exerciseIndex + 1)
+          const nextRest: ActiveRestState = {
+            deadline: Date.now() + restDuration * 1000,
+            remainingSeconds: restDuration,
+            isPaused: false,
+            nextExerciseIndex: exerciseIndex + 1,
+            durationSeconds: restDuration,
+          }
+          setRest(nextRest)
+          persistSession(workout, nextProgress, exerciseIndex, nextRest)
+        } else {
+          persistSession(workout, nextProgress, exerciseIndex, null)
         }
       } else {
-        setRestTimer(restDuration)
-        setIsResting(true)
+        const nextRest: ActiveRestState = {
+          deadline: Date.now() + restDuration * 1000,
+          remainingSeconds: restDuration,
+          isPaused: false,
+          nextExerciseIndex: exerciseIndex,
+          durationSeconds: restDuration,
+        }
+        setRest(nextRest)
+        persistSession(workout, nextProgress, exerciseIndex, nextRest)
       }
     }
   }
@@ -128,46 +187,118 @@ export default function RoutinePage() {
     const currentProgress = progress[exerciseIndex]
     if (currentProgress.completedSets > 0) {
       const newCompletedSets = currentProgress.completedSets - 1
-      setProgress((prev) =>
-        prev.map((p, i) =>
-          i === exerciseIndex ? { ...p, completedSets: newCompletedSets, isCompleted: false } : p,
-        ),
+      const nextProgress = progress.map((p, i) =>
+        i === exerciseIndex ? { ...p, completedSets: newCompletedSets, isCompleted: false } : p,
       )
-      if (exerciseIndex === currentExerciseIndex && isResting) {
-        setIsResting(false)
-        setRestTimer(0)
-      }
+      setProgress(nextProgress)
+      const nextRest = exerciseIndex === currentExerciseIndex ? null : rest
+      setRest(nextRest)
+      persistSession(workout, nextProgress, currentExerciseIndex, nextRest)
     }
   }
 
+  const hasWorkoutProgress = () => progress.some((item) => item.completedSets > 0 || item.isCompleted)
+
+  const canReorderExercise = (index: number) => {
+    if (index < 0 || index >= workout.length || progress[index]?.isCompleted) return false
+    if (!hasWorkoutProgress()) return true
+    return index > currentExerciseIndex
+  }
+
   const moveExercise = (fromIndex: number, toIndex: number) => {
-    if (toIndex < 0 || toIndex >= workout.length) return
+    if (!canReorderExercise(fromIndex) || !canReorderExercise(toIndex) || fromIndex === toIndex) return
+
+    let nextCurrentExerciseIndex = currentExerciseIndex
+    if (fromIndex === currentExerciseIndex) {
+      nextCurrentExerciseIndex = toIndex
+    } else if (fromIndex < currentExerciseIndex && toIndex >= currentExerciseIndex) {
+      nextCurrentExerciseIndex = currentExerciseIndex - 1
+    } else if (fromIndex > currentExerciseIndex && toIndex <= currentExerciseIndex) {
+      nextCurrentExerciseIndex = currentExerciseIndex + 1
+    }
+
     const newWorkout = [...workout]
     const newProgress = [...progress]
     const [movedExercise] = newWorkout.splice(fromIndex, 1)
     newWorkout.splice(toIndex, 0, movedExercise)
     const [movedProgress] = newProgress.splice(fromIndex, 1)
     newProgress.splice(toIndex, 0, movedProgress)
-    setCurrentExerciseIndex(0)
     setWorkout(newWorkout)
     setProgress(newProgress)
-    setCurrentWorkout(newWorkout)
+    setCurrentExerciseIndex(nextCurrentExerciseIndex)
+    persistSession(newWorkout, newProgress, nextCurrentExerciseIndex, rest)
   }
 
   const jumpToExercise = (index: number) => {
     setCurrentExerciseIndex(index)
-    if (isResting) {
-      setIsResting(false)
-      setRestTimer(0)
-    }
+    setRest(null)
+    persistSession(workout, progress, index, null)
   }
 
   const skipRest = () => {
-    setIsResting(false)
-    setRestTimer(0)
+    if (!rest) return
+    setRest(null)
+    setCurrentExerciseIndex(rest.nextExerciseIndex)
+    persistSession(workout, progress, rest.nextExerciseIndex, null)
   }
 
-  const addRest = (seconds: number) => setRestTimer((prev) => prev + seconds)
+  const addRest = (seconds: number) => {
+    if (!rest) return
+    const nextRest = rest.isPaused
+      ? { ...rest, remainingSeconds: rest.remainingSeconds + seconds, durationSeconds: rest.durationSeconds + seconds }
+      : {
+          ...rest,
+          deadline: (rest.deadline || Date.now()) + seconds * 1000,
+          durationSeconds: rest.durationSeconds + seconds,
+        }
+    setRest(nextRest)
+    persistSession(workout, progress, currentExerciseIndex, nextRest)
+  }
+
+  const toggleRestPause = () => {
+    if (!rest) return
+    const remaining = Math.max(0, Math.ceil(((rest.deadline || Date.now()) - Date.now()) / 1000))
+    const nextRest = rest.isPaused
+      ? { ...rest, isPaused: false, deadline: Date.now() + rest.remainingSeconds * 1000 }
+      : { ...rest, isPaused: true, deadline: null, remainingSeconds: remaining }
+    setRest(nextRest)
+    persistSession(workout, progress, currentExerciseIndex, nextRest)
+  }
+
+  const addExerciseToSession = (exercise: Exercise) => {
+    if (workout.some((item) => item.id === exercise.id)) {
+      toast({ title: "Already in workout", description: `${exercise.name} is already part of this session` })
+      return
+    }
+
+    const added: WorkoutExercise = { ...exercise, sets: getSettings().defaultSets, reps: getSettings().defaultReps }
+    const insertAt = Math.min(currentExerciseIndex + 1, workout.length)
+    const nextWorkout = [...workout]
+    const nextProgress = [...progress]
+    nextWorkout.splice(insertAt, 0, added)
+    nextProgress.splice(insertAt, 0, { exerciseId: exercise.id, completedSets: 0, isCompleted: false })
+    const nextRest = rest ? { ...rest, nextExerciseIndex: insertAt } : rest
+    setWorkout(nextWorkout)
+    setProgress(nextProgress)
+    setRest(nextRest)
+    persistSession(nextWorkout, nextProgress, currentExerciseIndex, nextRest)
+    toast({ title: "Exercise added", description: `${exercise.name} added after the current exercise` })
+  }
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    if (!canReorderExercise(index)) return
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = "move"
+    e.dataTransfer.setData("text/plain", String(index))
+  }
+
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (draggedIndex === null) return
+    moveExercise(draggedIndex, index)
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
 
   const finishWorkout = () => {
     const completedExercises = progress.filter((p) => p.isCompleted).length
@@ -191,6 +322,7 @@ export default function RoutinePage() {
 
     appendHistory(workoutSummary)
     setLastSummary(workoutSummary)
+    markRoutineCompleted(workout, workoutSummary.date)
     clearCurrentWorkout()
     router.push("/summary")
   }
@@ -227,6 +359,16 @@ export default function RoutinePage() {
   const totalSets = workout.reduce((sum, ex) => sum + ex.sets, 0)
   const completedSets = progress.reduce((sum, p) => sum + p.completedSets, 0)
   const allDone = totalExercises > 0 && completedExercises === totalExercises
+  const filteredLibrary = useMemo(
+    () => {
+      const workoutExerciseIds = new Set(workout.map((exercise) => exercise.id))
+      return library.filter(
+        (exercise) =>
+          !workoutExerciseIds.has(exercise.id) && exercise.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    },
+    [library, searchTerm, workout],
+  )
 
   if (workout.length === 0) {
     return (
@@ -239,7 +381,9 @@ export default function RoutinePage() {
   const current = workout[currentExerciseIndex]
   const currentProgress = progress[currentExerciseIndex]
   const currentSetNumber = Math.min((currentProgress?.completedSets || 0) + 1, current.sets)
-  const restPct = restDuration > 0 ? ((restDuration - restTimer) / restDuration) * 100 : 0
+  const isResting = Boolean(rest)
+  const restPct = rest ? ((rest.durationSeconds - restRemaining) / rest.durationSeconds) * 100 : 0
+  const nextExercise = rest ? workout[rest.nextExerciseIndex] : null
 
   return (
     <div className="min-h-screen bg-background pb-40">
@@ -263,6 +407,9 @@ export default function RoutinePage() {
           </div>
           <Button variant="ghost" size="icon-sm" onClick={exportWorkout} aria-label="Export routine">
             <Download className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon-sm" onClick={() => setAddOpen(true)} aria-label="Add exercise">
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
       </header>
@@ -305,18 +452,30 @@ export default function RoutinePage() {
                     {current.muscleGroup} · {current.equipment}
                   </p>
                 </div>
+                <Button variant="outline" size="sm" onClick={() => openExerciseModal(current)}>
+                  <Video className="h-4 w-4" />
+                  <span className="hidden sm:inline">Watch video</span>
+                </Button>
               </div>
 
               {isResting ? (
-                <div className="mt-6 flex flex-col items-center rounded-xl border border-brand/30 bg-brand/5 py-6">
+                <div className="mt-6 flex flex-col items-center rounded-xl border border-brand/30 bg-brand/5 px-4 py-6 text-center">
                   <ProgressRing value={restPct} size={132} strokeWidth={10}>
-                    <span className="font-display text-4xl font-semibold tabular-nums">{restTimer}</span>
+                    <span className="font-display text-4xl font-semibold tabular-nums">{restRemaining}</span>
                     <span className="eyebrow mt-1">Rest</span>
                   </ProgressRing>
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    {rest?.nextExerciseIndex === currentExerciseIndex ? "Next set" : "Next exercise"}: {" "}
+                    <span className="font-medium text-foreground">{nextExercise?.name}</span>
+                  </p>
                   <div className="mt-5 flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => addRest(15)}>
                       <Plus className="h-3.5 w-3.5" />
                       15s
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={toggleRestPause}>
+                      {rest?.isPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+                      {rest?.isPaused ? "Resume" : "Pause"}
                     </Button>
                     <Button variant="brand" size="sm" onClick={skipRest}>
                       <SkipForward className="h-3.5 w-3.5" />
@@ -363,20 +522,39 @@ export default function RoutinePage() {
           <section className="mt-6">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="eyebrow">Session</h3>
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {completedSets}/{totalSets} sets
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {completedSets}/{totalSets} sets
+                </span>
+                <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
+                  <Plus className="h-3.5 w-3.5" />
+                  Add
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               {workout.map((exercise, index) => {
                 const exProgress = progress[index]
                 const isCurrent = index === currentExerciseIndex
                 const isCompleted = exProgress?.isCompleted
+                const canReorder = canReorderExercise(index)
                 return (
                   <div
                     key={`${exercise.id}-${index}`}
+                    onDragOver={(e) => {
+                      if (!canReorder) return
+                      e.preventDefault()
+                      setDragOverIndex(index)
+                    }}
+                    onDrop={(e) => handleDrop(e, index)}
+                    onDragEnd={() => {
+                      setDraggedIndex(null)
+                      setDragOverIndex(null)
+                    }}
                     className={`rounded-xl border p-3 transition-colors ${
-                      isCurrent
+                      dragOverIndex === index && draggedIndex !== null
+                        ? "border-brand/50 bg-brand/5"
+                        : isCurrent
                         ? "border-brand/40 bg-brand/5"
                         : isCompleted
                           ? "border-border bg-card/50"
@@ -409,6 +587,17 @@ export default function RoutinePage() {
                       </button>
 
                       <div className="flex shrink-0 items-center">
+                        {canReorder ? (
+                          <button
+                            type="button"
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, index)}
+                            className="mr-1 rounded-md p-2 text-muted-foreground active:cursor-grabbing"
+                            aria-label="Drag to reorder"
+                          >
+                            <GripVertical className="h-4 w-4" />
+                          </button>
+                        ) : null}
                         {(exProgress?.completedSets || 0) > 0 ? (
                           <Button
                             variant="ghost"
@@ -424,7 +613,7 @@ export default function RoutinePage() {
                           variant="ghost"
                           size="icon-sm"
                           onClick={() => moveExercise(index, index - 1)}
-                          disabled={index === 0}
+                          disabled={!canReorder || !canReorderExercise(index - 1)}
                           aria-label="Move up"
                         >
                           <ChevronUp className="h-4 w-4" />
@@ -433,7 +622,7 @@ export default function RoutinePage() {
                           variant="ghost"
                           size="icon-sm"
                           onClick={() => moveExercise(index, index + 1)}
-                          disabled={index === workout.length - 1}
+                          disabled={!canReorder || !canReorderExercise(index + 1)}
                           aria-label="Move down"
                         >
                           <ChevronDown className="h-4 w-4" />
@@ -460,6 +649,7 @@ export default function RoutinePage() {
               variant="brand"
               size="xl"
               onClick={() => completeSet(currentExerciseIndex)}
+              disabled={isResting}
               className="flex-1"
             >
               <Check className="h-5 w-5" />
@@ -477,6 +667,48 @@ export default function RoutinePage() {
           setIsModalOpen(false)
         }}
       />
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add exercises</DialogTitle>
+            <DialogDescription>
+              Added exercises appear after the current exercise and can be reordered while they are upcoming.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search exercises"
+              className="pl-9"
+            />
+          </div>
+          <div className="space-y-2">
+            {filteredLibrary.map((exercise) => (
+              <div key={exercise.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
+                <button
+                  type="button"
+                  onClick={() => openExerciseModal({ ...exercise, sets: getSettings().defaultSets, reps: getSettings().defaultReps })}
+                  className="min-w-0 flex-1 text-left"
+                >
+                  <span className="block truncate text-sm font-medium">{exercise.name}</span>
+                  <span className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant="outline" className="capitalize">{capitalize(exercise.muscleGroup)}</Badge>
+                    <span className="capitalize">{exercise.equipment}</span>
+                    {exercise.youtubeUrl ? <Video className="h-3 w-3" /> : null}
+                  </span>
+                </button>
+                <Button size="sm" variant="outline" onClick={() => addExerciseToSession(exercise)}>
+                  <Plus className="h-4 w-4" />
+                  Add
+                </Button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -47,12 +47,46 @@ export interface WorkoutSettings {
   unit: "kg" | "lb"
 }
 
+export interface ExerciseProgress {
+  exerciseId: string
+  completedSets: number
+  isCompleted: boolean
+}
+
+export interface ActiveRestState {
+  deadline: number | null
+  remainingSeconds: number
+  isPaused: boolean
+  nextExerciseIndex: number
+  durationSeconds: number
+}
+
+export interface ActiveWorkoutSession {
+  version: 1
+  workout: WorkoutExercise[]
+  progress: ExerciseProgress[]
+  currentExerciseIndex: number
+  startedAt: string
+  rest: ActiveRestState | null
+}
+
+export interface SavedRoutine {
+  id: string
+  name: string
+  exercises: WorkoutExercise[]
+  createdAt: string
+  updatedAt: string
+  difficulty?: string
+  lastCompletedAt?: string
+}
+
 export const STORAGE_KEYS = {
   exercises: "workout-exercises",
   current: "current-workout",
   history: "workout-history",
   summary: "workout-summary",
   settings: "workout-settings",
+  routines: "saved-routines",
 } as const
 
 export const MUSCLE_GROUPS = [
@@ -138,10 +172,40 @@ const ensureExercisesInitialized = (): Exercise[] => {
 export const getExercises = (): Exercise[] => ensureExercisesInitialized()
 export const saveExercises = (exercises: Exercise[]) => write(STORAGE_KEYS.exercises, exercises)
 
-export const getCurrentWorkout = (): WorkoutExercise[] =>
-  read<WorkoutExercise[]>(STORAGE_KEYS.current, [])
-export const setCurrentWorkout = (workout: WorkoutExercise[]) =>
-  write(STORAGE_KEYS.current, workout)
+const isWorkoutArray = (value: unknown): value is WorkoutExercise[] => Array.isArray(value)
+
+export const createWorkoutSession = (workout: WorkoutExercise[]): ActiveWorkoutSession => ({
+  version: 1,
+  workout,
+  progress: workout.map((ex) => ({ exerciseId: ex.id, completedSets: 0, isCompleted: false })),
+  currentExerciseIndex: 0,
+  startedAt: new Date().toISOString(),
+  rest: null,
+})
+
+export const getCurrentWorkoutSession = (): ActiveWorkoutSession | null => {
+  const stored = read<unknown>(STORAGE_KEYS.current, [])
+  if (isWorkoutArray(stored)) return stored.length > 0 ? createWorkoutSession(stored) : null
+  if (
+    typeof stored === "object" &&
+    stored !== null &&
+    (stored as ActiveWorkoutSession).version === 1 &&
+    Array.isArray((stored as ActiveWorkoutSession).workout)
+  ) {
+    const session = stored as ActiveWorkoutSession
+    const progress = session.workout.map(
+      (exercise, index) =>
+        session.progress[index] || { exerciseId: exercise.id, completedSets: 0, isCompleted: false },
+    )
+    return { ...session, progress }
+  }
+  return null
+}
+
+export const setCurrentWorkoutSession = (session: ActiveWorkoutSession) => write(STORAGE_KEYS.current, session)
+
+export const getCurrentWorkout = (): WorkoutExercise[] => getCurrentWorkoutSession()?.workout || []
+export const setCurrentWorkout = (workout: WorkoutExercise[]) => setCurrentWorkoutSession(createWorkoutSession(workout))
 export const clearCurrentWorkout = () => {
   if (isBrowser()) window.localStorage.removeItem(STORAGE_KEYS.current)
 }
@@ -163,6 +227,34 @@ export const getSettings = (): WorkoutSettings => ({
   ...read<Partial<WorkoutSettings>>(STORAGE_KEYS.settings, {}),
 })
 export const saveSettings = (settings: WorkoutSettings) => write(STORAGE_KEYS.settings, settings)
+
+export const getSavedRoutines = (): SavedRoutine[] => read<SavedRoutine[]>(STORAGE_KEYS.routines, [])
+
+export const saveSavedRoutines = (routines: SavedRoutine[]) => write(STORAGE_KEYS.routines, routines)
+
+export const upsertSavedRoutine = (routine: SavedRoutine) => {
+  const routines = getSavedRoutines()
+  const index = routines.findIndex((item) => item.id === routine.id)
+  const next = index >= 0 ? routines.map((item, i) => (i === index ? routine : item)) : [...routines, routine]
+  saveSavedRoutines(next)
+  return next
+}
+
+export const createSavedRoutine = (name: string, exercises: WorkoutExercise[]): SavedRoutine => ({
+  id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+  name,
+  exercises,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+})
+
+export const markRoutineCompleted = (exercises: WorkoutExercise[], completedAt: string) => {
+  const ids = exercises.map((ex) => ex.id).join("|")
+  const routines = getSavedRoutines()
+  const match = routines.find((routine) => routine.exercises.map((ex) => ex.id).join("|") === ids)
+  if (!match) return
+  upsertSavedRoutine({ ...match, lastCompletedAt: completedAt, updatedAt: new Date().toISOString() })
+}
 
 /* ---------------------------------------------------------------- */
 /* Derived metrics                                                   */

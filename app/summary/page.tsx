@@ -5,15 +5,19 @@ import { Badge } from "@/components/ui/badge"
 import { Stat } from "@/components/ui/stat"
 import { ProgressRing } from "@/components/ui/progress-ring"
 import { PageContainer } from "@/components/page-container"
+import { RoutineNameDialog } from "@/components/routine-name-dialog"
 import { Check, Clock, Repeat, Target, Home, RotateCcw, TrendingUp } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { getLastSummary, type WorkoutSummary } from "@/lib/workout-store"
+import { createSavedRoutine, getLastSummary, upsertSavedRoutine, type WorkoutSummary } from "@/lib/workout-store"
+import { useToast } from "@/hooks/use-toast"
 
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
 
 export default function SummaryPage() {
   const [summary, setSummary] = useState<WorkoutSummary | null>(null)
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     setSummary(getLastSummary())
@@ -37,6 +41,12 @@ export default function SummaryPage() {
     summary.exercises > 0 ? Math.round((summary.completedExercises / summary.exercises) * 100) : 0
   const muscleGroups = Array.from(new Set(summary.workout.map((ex) => ex.muscleGroup)))
   const completedSets = summary.workout.reduce((sum, ex) => sum + ex.completedSets, 0)
+
+  const saveAsRoutine = (name: string) => {
+    const exercises = summary.workout.map(({ completedSets, isCompleted, ...exercise }) => exercise)
+    upsertSavedRoutine(createSavedRoutine(name, exercises))
+    toast({ title: "Routine saved", description: `${name} is available in My Routines` })
+  }
 
   return (
     <PageContainer>
@@ -145,6 +155,9 @@ export default function SummaryPage() {
             View progress
           </Link>
         </Button>
+        <Button variant="outline" size="lg" className="flex-1" onClick={() => setSaveDialogOpen(true)}>
+          Save as routine
+        </Button>
         <Button asChild variant="ghost" size="lg" className="flex-1">
           <Link href="/">
             <Home className="h-4 w-4" />
@@ -152,6 +165,16 @@ export default function SummaryPage() {
           </Link>
         </Button>
       </div>
+
+      <RoutineNameDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        title="Save as routine"
+        description="Keep this completed workout as a reusable routine for your next session."
+        initialName={`Workout ${new Date(summary.date).toLocaleDateString()}`}
+        submitLabel="Save routine"
+        onSubmit={saveAsRoutine}
+      />
     </PageContainer>
   )
 }

@@ -3,7 +3,7 @@
 import type React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Dumbbell, Home, TrendingUp, LibraryBig, User } from "lucide-react"
+import { Dumbbell, Home, TrendingUp, LibraryBig, User, ClipboardList } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -17,6 +17,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Home", icon: Home, match: (p) => p === "/" },
   { href: "/workout", label: "Train", icon: Dumbbell, match: (p) => p.startsWith("/workout") },
+  { href: "/routines", label: "Routines", icon: ClipboardList, match: (p) => p.startsWith("/routines") },
   { href: "/progress", label: "Progress", icon: TrendingUp, match: (p) => p.startsWith("/progress") },
   { href: "/exercises", label: "Library", icon: LibraryBig, match: (p) => p.startsWith("/exercises") },
   { href: "/settings", label: "Profile", icon: User, match: (p) => p.startsWith("/settings") },
@@ -42,7 +43,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname() || "/"
 
   // The active workout is a distraction-free, full-screen focus mode.
-  const focusMode = pathname.startsWith("/routine")
+  const focusMode = pathname === "/routine" || pathname.startsWith("/routine/")
 
   if (focusMode) {
     return <>{children}</>
@@ -100,7 +101,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
 
       {/* Mobile bottom navigation */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/90 pb-safe backdrop-blur lg:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-5">
+        <div className="mx-auto grid max-w-lg grid-cols-6">
           {NAV_ITEMS.map((item) => {
             const active = item.match(pathname)
             const Icon = item.icon
